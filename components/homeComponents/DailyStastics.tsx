@@ -52,7 +52,6 @@ export default function DailyStastics() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1, // 전체 화면을 채우도록 설정
         backgroundColor: "#FFFFFF",
     },
     row: {

@@ -2,14 +2,14 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet } from "react-native";
 import DailyStastics from "../../components/homeComponents/DailyStastics";
+import AddBtnGroup from "@/components/homeComponents/AddBtnGroup";
 
 export default function HomeScreen() {
     return (
-        <>
-            <SafeAreaView style={styles.container}>
-                <DailyStastics />
-            </SafeAreaView>
-        </>
+        <SafeAreaView style={styles.container}>
+            <DailyStastics />
+            <AddBtnGroup />
+        </SafeAreaView>
     );
 }
 
