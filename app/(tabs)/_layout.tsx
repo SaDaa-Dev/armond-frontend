@@ -1,52 +1,67 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Ionicons } from "@expo/vector-icons";
+import { useFonts } from "expo-font";
+import { Tabs } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { Platform } from "react-native";
+import { PaperProvider } from "react-native-paper";
+import "react-native-reanimated";
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+    const colorScheme = useColorScheme();
+    const [loaded] = useFonts({
+        SpaceMono: require("../../assets/fonts/SpaceMono-Regular.ttf"),
+    });
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="setting"
-        options={{
-          title: 'setting',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+    useEffect(() => {
+        if (loaded) {
+            SplashScreen.hideAsync();
+        }
+    }, [loaded]);
+
+    if (!loaded) {
+        return null;
+    }
+
+    return (
+        <PaperProvider>
+            <Tabs
+                screenOptions={({ route }) => ({
+                    headerShown: false,
+                    tabBarActiveTintColor: "#6200ee",
+                    tabBarInactiveTintColor: "gray",
+                    tabBarIcon: ({ color, size }) => {
+                        let iconName: string;
+
+                        switch (route.name) {
+                            case "index":
+                                iconName = "home";
+                                break;
+                            case "settings":
+                                iconName = "settings";
+                                break;
+                            default:
+                                iconName = "alert-circle";
+                                break;
+                        }
+
+                        return (
+                            <Ionicons
+                                name={iconName as any}
+                                size={size}
+                                color={color}
+                            />
+                        );
+                    },
+                })}
+            >
+                <Tabs.Screen name="index" options={{ title: "홈" }} />
+                <Tabs.Screen name="settings" options={{ title: "설정" }} />
+            </Tabs>
+        </PaperProvider>
+    );
 }
