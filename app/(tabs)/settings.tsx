@@ -5,7 +5,7 @@ export default function Settings() {
     return (
         <SafeAreaView>
             <View>
-                <Text>HI</Text>
+            
             </View>
         </SafeAreaView>
     );

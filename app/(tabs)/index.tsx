@@ -1,14 +1,23 @@
+import ExerciseContainer from "@/components/homeComponents/ExerciesContainer";
+import HomeFooter from "@/components/homeComponents/HomeFooter";
 import React from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { useTheme } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { StyleSheet } from "react-native";
-import DailyStastics from "../../components/homeComponents/DailyStastics";
-import AddBtnGroup from "@/components/homeComponents/AddBtnGroup";
 
 export default function HomeScreen() {
+    const theme = useTheme();
+
     return (
-        <SafeAreaView style={styles.container}>
-            <DailyStastics />
-            <AddBtnGroup />
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.contentContainer}>
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    {/* 통계 컴포넌트 */}
+                    {/* 캘린더 컴포넌트 */}
+                    <ExerciseContainer />
+                </ScrollView>
+                <HomeFooter />
+            </View>
         </SafeAreaView>
     );
 }
@@ -16,7 +25,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
-        padding: 8, // 전체 화면의 여백
+    },
+    contentContainer: {
+        flex: 1,
+    },
+    scrollContent: {
+        padding: 4,
     },
 });
