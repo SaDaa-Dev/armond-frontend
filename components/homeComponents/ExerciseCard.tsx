@@ -42,7 +42,7 @@ export default function ExerciseCard() {
 const styles = StyleSheet.create({
     card: {
         margin: 10,
-        padding: 10,
+        padding: 5,
         elevation: 2,  // Android 그림자
         shadowColor: '#000',  // iOS 그림자
         shadowOffset: { width: 0, height: 1 },

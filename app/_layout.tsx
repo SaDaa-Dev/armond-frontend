@@ -9,6 +9,8 @@ const darkTheme = {
     ...MD3DarkTheme.colors,
     background: '#121212',    // 전체 배경 (검정)
     surface: '#1E1E1E',      // 카드 배경 (진한 회색)
+    primary: '#2196F3',      // 메인 색상 (파란색)
+    secondary: '#64B5F6',    // 보조 색상 (밝은 파란색)
     elevation: {
       level0: '#121212',
       level1: '#1E1E1E',     // 카드 배경

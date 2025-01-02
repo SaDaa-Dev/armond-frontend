@@ -9,27 +9,30 @@ export default function HomeScreen() {
     const theme = useTheme();
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <View style={styles.contentContainer}>
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                    {/* 통계 컴포넌트 */}
-                    {/* 캘린더 컴포넌트 */}
-                    <ExerciseContainer />
-                </ScrollView>
-                <HomeFooter />
-            </View>
-        </SafeAreaView>
+        <View
+            style={[
+                styles.homeContainer,
+                { backgroundColor: theme.colors.background },
+            ]}
+        >
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* 통계 컴포넌트 */}
+                {/* 캘린더 컴포넌트 */}
+                <ExerciseContainer />
+            </ScrollView>
+            <HomeFooter />
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    homeContainer: {
         flex: 1,
     },
     contentContainer: {
         flex: 1,
     },
     scrollContent: {
-        padding: 4,
+        padding: 2,
     },
 });

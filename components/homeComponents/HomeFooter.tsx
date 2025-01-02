@@ -1,36 +1,25 @@
 import { StyleSheet, View } from "react-native";
 import { Button } from "react-native-paper";
+import HomeFooterBtn from "./HomeFooterBtn";
 
 export default function HomeFooter() {
     return (
         <View style={styles.footer}>
-            <Button 
-                mode="contained" 
-                style={styles.button}
-                onPress={() => console.log('운동 시작')}
-            >
-                운동 시작
-            </Button>
-            <Button 
+            <HomeFooterBtn text="운동 시작" onPress={() => console.log('운동 시작')} />
+            <HomeFooterBtn 
+                text="계획하기" 
                 mode="outlined"
-                style={styles.button}
-                onPress={() => console.log('계획하기')}
-            >
-                계획하기
-            </Button>
+                onPress={() => console.log('계획하기')} 
+            />
         </View>
     );
 }   
-
 const styles = StyleSheet.create({
     footer: {
-        padding: 24,
+        padding: 16,
         paddingBottom: 12,
         flexDirection: 'row',
         justifyContent: 'space-between',
         gap: 16,
-    },
-    button: {
-        flex: 1, // 버튼이 동일한 너비를 가지도록
     },
 });   
