@@ -26,11 +26,10 @@ export default function HomeFooterBtn({ onPress, text, mode = "contained" }: Hom
 const styles = StyleSheet.create({
     button: {
         flex: 1,
-        borderRadius: 8,
-        paddingVertical: 8,
+        borderRadius: 24,
     },
     outlinedButton: {
-        borderColor: '#2196F3',  // 파란색 테두리
+        borderColor: '#9C27B0',  // 퍼플 테두리
     },
     buttonLabel: {
         fontSize: 16,

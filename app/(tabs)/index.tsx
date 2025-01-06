@@ -3,7 +3,6 @@ import HomeFooter from "@/components/homeComponents/HomeFooter";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useTheme } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
     const theme = useTheme();

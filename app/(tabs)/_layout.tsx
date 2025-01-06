@@ -1,11 +1,9 @@
-import { useColorScheme } from "@/hooks/useColorScheme";
 import { Ionicons } from "@expo/vector-icons";
-import { DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { useFonts } from "expo-font";
 import { Tabs } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { MD3DarkTheme, PaperProvider, useTheme } from "react-native-paper";
+import { useTheme } from "react-native-paper";
 import "react-native-reanimated";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
