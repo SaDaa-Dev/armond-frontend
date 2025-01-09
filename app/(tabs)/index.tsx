@@ -1,8 +1,8 @@
-import ExerciseContainer from "@/components/homeComponents/ExerciesContainer";
-import HomeFooter from "@/components/homeComponents/HomeFooter";
+import WorkoutFooter from "@/src/components/homeComponents/WorkoutFooter";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useTheme } from "react-native-paper";
+
 
 export default function HomeScreen() {
     const theme = useTheme();
@@ -15,20 +15,15 @@ export default function HomeScreen() {
             ]}
         >
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* 통계 컴포넌트 */}
-                {/* 캘린더 컴포넌트 */}
-                <ExerciseContainer />
+                {/* 운동 리스트 컴포넌트 추가 예정 */}
             </ScrollView>
-            <HomeFooter />
+            <WorkoutFooter />
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     homeContainer: {
-        flex: 1,
-    },
-    contentContainer: {
         flex: 1,
     },
     scrollContent: {

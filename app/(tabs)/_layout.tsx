@@ -1,29 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useFonts } from "expo-font";
 import { Tabs } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
 import { useTheme } from "react-native-paper";
 import "react-native-reanimated";
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
 export default function TabLayout() {
     const theme = useTheme();
-    const [loaded] = useFonts({
-        SpaceMono: require("../../assets/fonts/SpaceMono-Regular.ttf"),
-    });
-
-    useEffect(() => {
-        if (loaded) { 
-            SplashScreen.hideAsync();
-        }
-    }, [loaded]);
-
-    if (!loaded) {
-        return null;
-    }
 
     return (
         <Tabs

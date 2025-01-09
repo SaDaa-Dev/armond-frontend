@@ -1,30 +1,30 @@
-import { StyleSheet, View } from "react-native";
-import { Button } from "react-native-paper";
-import HomeFooterBtn from "./HomeFooterBtn";
-import CreateWorkoutSheet from "./CreateWorkoutSchedule";
 import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import CustomButton from "@/src/components/common/Button/CustomButton";
+import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
+import { useWorkoutStore } from "@/src/store/workoutStore";
 
-export default function HomeFooter() {
+export default function WorkoutFooter() {
     const [sheetVisible, setSheetVisible] = useState(false);
-
-    const handleWorkoutStart = () => {
-        setSheetVisible(true);
-    };
+    const { count, actions } = useWorkoutStore();
 
     return (
         <>
             <View style={styles.footer}>
-                <HomeFooterBtn
+                <CustomButton
                     text="운동 시작"
-                    onPress={handleWorkoutStart}
+                    onPress={() => {
+                        setSheetVisible(true);
+                        actions.increment();
+                    }}
                 />
-                <HomeFooterBtn
+                <CustomButton
                     text="계획하기"
                     mode="outlined"
                     onPress={() => console.log("계획하기")}
                 />
             </View>
-            <CreateWorkoutSheet 
+            <CreateWorkoutSchedule   
                 visible={sheetVisible} 
                 onDismiss={() => setSheetVisible(false)}
             />
@@ -40,4 +40,4 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         gap: 16,
     },
-});
+}); 

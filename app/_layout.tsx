@@ -1,5 +1,5 @@
 import React from 'react';
-import { Slot } from 'expo-router';
+import { Slot, Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
@@ -25,6 +25,8 @@ const darkTheme = {
 };
 
 export default function RootLayout() {
+  const isAuthenticated = true; // 나중에 실제 인증 상태로 대체
+
   return (
     <SafeAreaProvider>
       <StatusBar 
@@ -33,7 +35,20 @@ export default function RootLayout() {
         translucent={false}
       />
       <PaperProvider theme={darkTheme}>
-        <Slot />
+        <Stack>
+          {/* 인증 상태에 따라 다른 스크린 표시 */}
+          {!isAuthenticated ? (
+            <Stack.Screen
+              name="(auth)/login"
+              options={{ headerShown: false }}
+            />
+          ) : (
+            <Stack.Screen
+              name="(tabs)"
+              options={{ headerShown: false }}
+            />
+          )}
+        </Stack>
       </PaperProvider>
     </SafeAreaProvider>
   );
