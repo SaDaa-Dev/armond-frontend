@@ -2,11 +2,12 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import CustomButton from "@/src/components/common/Button/CustomButton";
 import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
-import { useWorkoutStore } from "@/src/store/workoutStore";
+import { useSelector } from "react-redux";
+import { RootState } from "@/src/store";
 
 export default function WorkoutFooter() {
     const [sheetVisible, setSheetVisible] = useState(false);
-    const { count, actions } = useWorkoutStore();
+    const count = useSelector((state: RootState) => state.workout.count);
 
     return (
         <>
@@ -15,8 +16,10 @@ export default function WorkoutFooter() {
                     text="운동 시작"
                     onPress={() => {
                         setSheetVisible(true);
-                        actions.increment();
-                    }}
+                        console.log("hi");
+                        }}
+
+
                 />
                 <CustomButton
                     text="계획하기"

@@ -1,8 +1,29 @@
+declare global {
+  interface Window {
+    __REDUX_DEVTOOLS_EXTENSION__?: any;
+    __REACT_DEVTOOLS_PORT__?: number;
+  }
+}
+
 import React from 'react';
 import { Slot, Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
+import { Provider } from 'react-redux';
+import { store } from '@/src/store';
+
+// React Native Debugger 설정
+if (__DEV__) {
+  // @ts-ignore
+  global.XMLHttpRequest = global.originalXMLHttpRequest || global.XMLHttpRequest;
+  // @ts-ignore
+  global.FormData = global.originalFormData || global.FormData;
+
+  // React Native Debugger 포트 설정
+  // @ts-ignore
+  window.__REACT_DEVTOOLS_PORT__ = 19000;
+}
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -25,31 +46,32 @@ const darkTheme = {
 };
 
 export default function RootLayout() {
-  const isAuthenticated = true; // 나중에 실제 인증 상태로 대체
+  const isAuthenticated = true;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar 
-        style="light"
-        backgroundColor="#1E1E1E"
-        translucent={false}
-      />
-      <PaperProvider theme={darkTheme}>
-        <Stack>
-          {/* 인증 상태에 따라 다른 스크린 표시 */}
-          {!isAuthenticated ? (
-            <Stack.Screen
-              name="(auth)/login"
-              options={{ headerShown: false }}
-            />
-          ) : (
-            <Stack.Screen
-              name="(tabs)"
-              options={{ headerShown: false }}
-            />
-          )}
-        </Stack>
-      </PaperProvider>
-    </SafeAreaProvider>
+    <Provider store={store}>
+      <SafeAreaProvider>
+        <StatusBar 
+          style="light"
+          backgroundColor="#1E1E1E"
+          translucent={false}
+        />
+        <PaperProvider theme={darkTheme}>
+          <Stack>
+            {!isAuthenticated ? (
+              <Stack.Screen
+                name="(auth)/login"
+                options={{ headerShown: false }}
+              />
+            ) : (
+              <Stack.Screen
+                name="(tabs)"
+                options={{ headerShown: false }}
+              />
+            )}
+          </Stack>
+        </PaperProvider>
+      </SafeAreaProvider>
+    </Provider>
   );
 }

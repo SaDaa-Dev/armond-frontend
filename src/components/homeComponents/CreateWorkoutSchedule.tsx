@@ -1,4 +1,5 @@
-import { useWorkoutStore } from '@/src/store/workoutStore';
+import { RootState } from '@/src/store';
+import { increment } from '@/src/store/features/workoutSlice';
 import React, { useEffect } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { Button, IconButton, Portal, Text, useTheme } from 'react-native-paper';
@@ -7,6 +8,7 @@ import Animated, {
     useSharedValue,
     withSpring
 } from 'react-native-reanimated';
+import { useDispatch, useSelector } from 'react-redux';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -18,7 +20,8 @@ interface CreateWorkoutScheduleProps {
 export default function CreateWorkoutSchedule({ visible, onDismiss }: CreateWorkoutScheduleProps) {
     const theme = useTheme();
     const translateY = useSharedValue(0);
-    const { count, actions } = useWorkoutStore();
+    const dispatch = useDispatch();
+    const count = useSelector((state: RootState) => state.workout.count);
 
     const rBottomSheetStyle = useAnimatedStyle(() => {
         return {
@@ -59,10 +62,10 @@ export default function CreateWorkoutSchedule({ visible, onDismiss }: CreateWork
                     />
                 </View>
                 <View style={styles.content}>
-                    {/* 여기에 운동 선택 폼 등 추가 */}
                     <Text>{count}</Text>
-                    <Button onPress={actions.increment}>Increment</Button>
-                    
+                    <Button onPress={() => dispatch(increment())}>
+                        Increment
+                    </Button>
                 </View>
             </Animated.View>
         </Portal>
