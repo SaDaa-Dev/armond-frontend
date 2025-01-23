@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface WorkoutState {
+    checkedWorkout: number[];
     count: number;
 }
 
 const initialState: WorkoutState = {
+    checkedWorkout: [],
     count: 0,
 };
 
@@ -12,6 +14,12 @@ export const workoutSlice = createSlice({
     name: 'workout',
     initialState,
     reducers: {
+        addCheckedWorkout: (state, action: PayloadAction<number>) => {
+            state.checkedWorkout.push(action.payload);
+        },
+        removeCheckedWorkout: (state, action: PayloadAction<number>) => {
+            state.checkedWorkout = state.checkedWorkout.filter(id => id !== action.payload);
+        },
         increment: (state) => {
             state.count += 1;
         },

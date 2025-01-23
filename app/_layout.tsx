@@ -5,13 +5,14 @@ declare global {
   }
 }
 
-import React from 'react';
-import { Slot, Stack } from 'expo-router';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PaperProvider, MD3DarkTheme } from 'react-native-paper';
+import { store } from '@/src/store/configureStore';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
-import { store } from '@/src/store';
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -50,28 +51,30 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <StatusBar 
-          style="light"
-          backgroundColor="#1E1E1E"
-          translucent={false}
-        />
-        <PaperProvider theme={darkTheme}>
-          <Stack>
-            {!isAuthenticated ? (
-              <Stack.Screen
-                name="(auth)/login"
-                options={{ headerShown: false }}
-              />
-            ) : (
-              <Stack.Screen
-                name="(tabs)"
-                options={{ headerShown: false }}
-              />
-            )}
-          </Stack>
-        </PaperProvider>
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <StatusBar 
+            style="light"
+            backgroundColor="#1E1E1E"
+            translucent={false}
+          />
+          <PaperProvider theme={darkTheme}>
+            <Stack>
+              {!isAuthenticated ? (
+                <Stack.Screen
+                  name="(auth)/login"
+                  options={{ headerShown: false }}
+                />
+              ) : (
+                <Stack.Screen
+                  name="(tabs)"
+                  options={{ headerShown: false }}
+                />
+              )}
+            </Stack>
+          </PaperProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </Provider>
   );
 }
