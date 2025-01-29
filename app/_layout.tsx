@@ -12,6 +12,7 @@ import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 
 // React Native Debugger 설정
@@ -75,6 +76,8 @@ export default function RootLayout() {
           </PaperProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
+      {/* Toast 컴포넌트 추가 */}
+      <Toast />
     </Provider>
   );
 }

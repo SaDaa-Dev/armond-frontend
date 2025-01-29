@@ -30,8 +30,7 @@ export const workoutSlice = createSlice({
             state.count += action.payload;
         },
     },
-
 });
 
-export const { increment, decrement, incrementByAmount } = workoutSlice.actions;
+export const { increment, decrement, incrementByAmount, addCheckedWorkout, removeCheckedWorkout } = workoutSlice.actions;   
 export default workoutSlice.reducer; 
