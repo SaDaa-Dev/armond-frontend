@@ -67,11 +67,9 @@ export default function CreateWorkoutSchedule({
     const handleStartWorkout = () => {
         // 선택한 운동 없으면 알림 띄우기
         if (!isWorkoutSelected) {
-            console.log("선택한 운동 없음");
             Toast.show({
                 type: "success",
-                text1: "Hello",
-                text2: "This is some something 👋",
+                text1: "선택한 운동이 없습니다."
             });
             return;
         }

@@ -31,6 +31,8 @@ export default function WorkoutList() {
     
     // 메모이제이션된 이벤트 핸들러
     const handleIncrement = useCallback(() => {
+        console.log("increment");
+        debugger;
         dispatch(increment());
     }, [dispatch]);
     

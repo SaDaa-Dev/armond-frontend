@@ -14,6 +14,8 @@ import { MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
+import { useReactQueryDevTools } from '@dev-plugins/react-query';
+import { QueryClient } from '@tanstack/react-query';
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -26,6 +28,7 @@ if (__DEV__) {
   // @ts-ignore
   window.__REACT_DEVTOOLS_PORT__ = 19000;
 }
+const queryClient = new QueryClient();
 
 const darkTheme = {
   ...MD3DarkTheme,
@@ -49,6 +52,7 @@ const darkTheme = {
 
 export default function RootLayout() {
   const isAuthenticated = true;
+  useReactQueryDevTools(queryClient);
 
   return (
     <Provider store={store}>
