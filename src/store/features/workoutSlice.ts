@@ -1,13 +1,21 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+interface WorkoutRoutine {
+    id: string;
+    name: string;
+    workouts: number[];
+}
+
 interface WorkoutState {
     checkedWorkout: number[];
     count: number;
+    routines: WorkoutRoutine[];
 }
 
 const initialState: WorkoutState = {
     checkedWorkout: [],
     count: 0,
+    routines: [],
 };
 
 export const workoutSlice = createSlice({
@@ -19,6 +27,18 @@ export const workoutSlice = createSlice({
         },
         removeCheckedWorkout: (state, action: PayloadAction<number>) => {
             state.checkedWorkout = state.checkedWorkout.filter(id => id !== action.payload);
+        },
+        saveWorkoutRoutine: (state, action: PayloadAction<{ name: string }>) => {
+            const newRoutine: WorkoutRoutine = {
+                id: Date.now().toString(),
+                name: action.payload.name,
+                workouts: [...state.checkedWorkout],
+            };
+            state.routines.push(newRoutine);
+            state.checkedWorkout = []; // 저장 후 선택된 운동 초기화
+        },
+        deleteWorkoutRoutine: (state, action: PayloadAction<string>) => {
+            state.routines = state.routines.filter(routine => routine.id !== action.payload);
         },
         increment: (state) => {
             state.count += 1;
@@ -32,5 +52,13 @@ export const workoutSlice = createSlice({
     },
 });
 
-export const { increment, decrement, incrementByAmount, addCheckedWorkout, removeCheckedWorkout } = workoutSlice.actions;   
+export const { 
+    increment, 
+    decrement, 
+    incrementByAmount, 
+    addCheckedWorkout, 
+    removeCheckedWorkout,
+    saveWorkoutRoutine,
+    deleteWorkoutRoutine,
+} = workoutSlice.actions;
 export default workoutSlice.reducer; 

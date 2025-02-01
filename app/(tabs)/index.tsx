@@ -4,7 +4,6 @@ import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useTheme } from "react-native-paper";
 
-
 export default function HomeScreen() {
     const theme = useTheme();
 
@@ -16,7 +15,6 @@ export default function HomeScreen() {
             ]}
         >
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* 운동 리스트 컴포넌트 추가 예정 */}
                 <WorkoutList />
             </ScrollView>
             <WorkoutFooter />

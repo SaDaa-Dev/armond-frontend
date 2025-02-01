@@ -52,7 +52,7 @@ const darkTheme = {
 
 export default function RootLayout() {
   const isAuthenticated = true;
-  useReactQueryDevTools(queryClient);
+  
 
   return (
     <Provider store={store}>

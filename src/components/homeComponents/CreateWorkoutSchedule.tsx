@@ -1,7 +1,8 @@
-import { RootState } from "@/src/store/configureStore";
+import { useWorkout } from "@/src/hooks/useWorkout";
+import { saveWorkoutRoutine } from "@/src/store/features/workoutSlice";
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
-import { IconButton, Portal, Text, useTheme } from "react-native-paper";
+import { Button, IconButton, Portal, Text, TextInput, useTheme } from "react-native-paper";
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -9,11 +10,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import StartWorkoutButton from "./StartWorkoutButton";
 import WorkoutCategories from "./WorkoutCategories";
 import WorkoutPresetList from "./WorkoutPresetList";
-import { useWorkout } from "@/src/hooks/useWorkout";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -31,7 +31,10 @@ export default function CreateWorkoutSchedule({
     const [selectedCategories, setSelectedCategories] = useState<string[]>([
         "chest",
     ]);
+    const [routineName, setRoutineName] = useState("");
+    const [showSaveDialog, setShowSaveDialog] = useState(false);
     const insets = useSafeAreaInsets();
+    const dispatch = useDispatch();
     const { checkedWorkouts, isWorkoutSelected } = useWorkout();
 
     const rBottomSheetStyle = useAnimatedStyle(() => {
@@ -65,14 +68,32 @@ export default function CreateWorkoutSchedule({
     };
 
     const handleStartWorkout = () => {
-        // 선택한 운동 없으면 알림 띄우기
         if (!isWorkoutSelected) {
             Toast.show({
-                type: "success",
+                type: "error",
                 text1: "선택한 운동이 없습니다."
             });
             return;
         }
+        setShowSaveDialog(true);
+    };
+
+    const handleSaveRoutine = () => {
+        if (!routineName.trim()) {
+            Toast.show({
+                type: "error",
+                text1: "루틴 이름을 입력해주세요."
+            });
+            return;
+        }
+
+        dispatch(saveWorkoutRoutine({ name: routineName.trim() }));
+        setRoutineName("");
+        setShowSaveDialog(false);
+        Toast.show({
+            type: "success",
+            text1: "루틴이 저장되었습니다."
+        });
         onDismiss();
     };
 
@@ -112,7 +133,36 @@ export default function CreateWorkoutSchedule({
                     <WorkoutPresetList
                         selectedCategories={selectedCategories}
                     />
-                    <StartWorkoutButton onPress={handleStartWorkout} />
+                    
+                    {showSaveDialog ? (
+                        <View style={styles.saveDialog}>
+                            <TextInput
+                                label="루틴 이름"
+                                value={routineName}
+                                onChangeText={setRoutineName}
+                                style={styles.input}
+                                mode="outlined"
+                            />
+                            <View style={styles.dialogButtons}>
+                                <Button 
+                                    mode="outlined" 
+                                    onPress={() => setShowSaveDialog(false)}
+                                    style={styles.dialogButton}
+                                >
+                                    취소
+                                </Button>
+                                <Button 
+                                    mode="contained" 
+                                    onPress={handleSaveRoutine}
+                                    style={styles.dialogButton}
+                                >
+                                    저장
+                                </Button>
+                            </View>
+                        </View>
+                    ) : (
+                        <StartWorkoutButton onPress={handleStartWorkout} />
+                    )}
                 </View>
             </Animated.View>
         </Portal>
@@ -137,5 +187,22 @@ const styles = StyleSheet.create({
     },
     contentContainer: {
         flex: 1,
+    },
+    saveDialog: {
+        padding: 16,
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        borderRadius: 12,
+        margin: 16,
+    },
+    input: {
+        marginBottom: 16,
+    },
+    dialogButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 8,
+    },
+    dialogButton: {
+        minWidth: 100,
     },
 });
