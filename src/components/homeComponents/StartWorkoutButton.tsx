@@ -5,9 +5,12 @@ import { useWorkout } from '@/src/hooks/useWorkout';
 
 interface StartWorkoutButtonProps {
     onPress: () => void;
+    text?: string;
 }
 
-export default function StartWorkoutButton({ onPress }: StartWorkoutButtonProps) {
+export default function StartWorkoutButton({ onPress, text = "운동 시작" }: StartWorkoutButtonProps) {
+    const { isWorkoutSelected } = useWorkout();
+
     return (
         <Button
             mode="contained"
@@ -17,8 +20,9 @@ export default function StartWorkoutButton({ onPress }: StartWorkoutButtonProps)
                 fontWeight: "bold",
             }}
             onPress={onPress}
+            disabled={!isWorkoutSelected}
         >
-            <Text style={{ color: "#FFFFFF" }}>운동 시작</Text>
+            <Text style={{ color: "#FFFFFF" }}>{text}</Text>
         </Button>
     );
 }

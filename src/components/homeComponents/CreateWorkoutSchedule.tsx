@@ -20,11 +20,13 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 interface CreateWorkoutScheduleProps {
     visible: boolean;
     onDismiss: () => void;
+    mode?: 'quick' | 'planning';
 }
 
 export default function CreateWorkoutSchedule({
     visible,
     onDismiss,
+    mode = 'planning'
 }: CreateWorkoutScheduleProps) {
     const theme = useTheme();
     const translateX = useSharedValue(SCREEN_WIDTH);
@@ -75,7 +77,13 @@ export default function CreateWorkoutSchedule({
             });
             return;
         }
-        setShowSaveDialog(true);
+        
+        if (mode === 'planning') {
+            setShowSaveDialog(true);
+        } else {
+            // TODO: 운동 시작 화면으로 이동
+            onDismiss();
+        }
     };
 
     const handleSaveRoutine = () => {
@@ -115,7 +123,7 @@ export default function CreateWorkoutSchedule({
                         variant="headlineSmall"
                         style={{ color: theme.colors.onSurface }}
                     >
-                        운동 선택
+                        {mode === 'quick' ? '빠른 운동 시작' : '운동 루틴 만들기'}
                     </Text>
                     <IconButton
                         icon="close"
@@ -161,7 +169,10 @@ export default function CreateWorkoutSchedule({
                             </View>
                         </View>
                     ) : (
-                        <StartWorkoutButton onPress={handleStartWorkout} />
+                        <StartWorkoutButton 
+                            onPress={handleStartWorkout}
+                            text={mode === 'quick' ? '운동 시작' : '루틴 저장'}
+                        />
                     )}
                 </View>
             </Animated.View>
