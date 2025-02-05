@@ -10,18 +10,23 @@ interface WorkoutState {
     checkedWorkout: number[];
     count: number;
     routines: WorkoutRoutine[];
+    showWorkoutSession: boolean;
 }
 
 const initialState: WorkoutState = {
     checkedWorkout: [],
     count: 0,
     routines: [],
+    showWorkoutSession: false,
 };
 
 export const workoutSlice = createSlice({
     name: 'workout',
     initialState,
     reducers: {
+        setShowWorkoutSession: (state, action: PayloadAction<boolean>) => {
+            state.showWorkoutSession = action.payload;
+        },
         addCheckedWorkout: (state, action: PayloadAction<number>) => {
             state.checkedWorkout.push(action.payload);
         },
@@ -60,5 +65,6 @@ export const {
     removeCheckedWorkout,
     saveWorkoutRoutine,
     deleteWorkoutRoutine,
+    setShowWorkoutSession,
 } = workoutSlice.actions;
 export default workoutSlice.reducer; 

@@ -1,15 +1,17 @@
+import CustomButton from "@/src/components/common/Button/CustomButton";
+import { useWorkout } from "@/src/hooks/useWorkout";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Portal, Modal, List } from "react-native-paper";
-import CustomButton from "@/src/components/common/Button/CustomButton";
-import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
+import { List, Modal, Portal } from "react-native-paper";
 import { useDispatch } from "react-redux";
-import { increment } from "@/src/store/features/workoutSlice";
-import { useWorkout } from "@/src/hooks/useWorkout";
+import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
+import { setShowWorkoutSession } from "@/src/store/features/workoutSlice";
+import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
 
 export default function WorkoutFooter() {
     const [quickStartVisible, setQuickStartVisible] = useState(false);
     const [planningModalVisible, setPlanningModalVisible] = useState(false);
+    const { showWorkoutSession, checkedWorkouts } = useWorkout();
     const dispatch = useDispatch();
 
     const handleQuickStart = () => {
@@ -40,6 +42,8 @@ export default function WorkoutFooter() {
                 onDismiss={() => setQuickStartVisible(false)}
                 mode="quick"
             />
+
+            <WorkoutSession />
 
             {/* 계획하기 모달 */}
             <Portal>

@@ -11,14 +11,14 @@ const WORKOUT_PRESETS = {
         { id: 3, title: "딥스", subtitle: "하부 가슴과 삼두" },
     ],
     back: [
-        { id: 7, title: "데드리프트", subtitle: "전신 운동" },
-        { id: 8, title: "풀업", subtitle: "등근육 발달" },
+        { id: 4, title: "데드리프트", subtitle: "전신 운동" },
+        { id: 5, title: "풀업", subtitle: "등근육 발달" },
     ],
 };
 
 export default function WorkoutList() {
     const dispatch = useDispatch();
-    const { routines } = useWorkout();
+    const { routines, showWorkoutSession } = useWorkout();
 
     const getWorkoutTitle = (workoutId: number) => {
         for (const category of Object.values(WORKOUT_PRESETS)) {

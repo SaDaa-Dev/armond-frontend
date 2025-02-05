@@ -1,8 +1,18 @@
 import { useWorkout } from "@/src/hooks/useWorkout";
-import { saveWorkoutRoutine } from "@/src/store/features/workoutSlice";
+import {
+    saveWorkoutRoutine,
+    setShowWorkoutSession,
+} from "@/src/store/features/workoutSlice";
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
-import { Button, IconButton, Portal, Text, TextInput, useTheme } from "react-native-paper";
+import {
+    Button,
+    IconButton,
+    Portal,
+    Text,
+    TextInput,
+    useTheme,
+} from "react-native-paper";
 import Animated, {
     useAnimatedStyle,
     useSharedValue,
@@ -20,24 +30,33 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 interface CreateWorkoutScheduleProps {
     visible: boolean;
     onDismiss: () => void;
-    mode?: 'quick' | 'planning';
+    mode?: "quick" | "planning";
+    onWorkoutSelect?: (workouts: number[]) => void;
 }
 
 export default function CreateWorkoutSchedule({
     visible,
     onDismiss,
-    mode = 'planning'
+    mode = "planning",
+    onWorkoutSelect,
 }: CreateWorkoutScheduleProps) {
     const theme = useTheme();
     const translateX = useSharedValue(SCREEN_WIDTH);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([
         "chest",
+        "back",
+        "shoulder",
+        "biceps",
+        "triceps",
+        "abs",
+        "legs",
+        "fullbody",
     ]);
     const [routineName, setRoutineName] = useState("");
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const insets = useSafeAreaInsets();
-    const dispatch = useDispatch();
     const { checkedWorkouts, isWorkoutSelected } = useWorkout();
+    const dispatch = useDispatch();
 
     const rBottomSheetStyle = useAnimatedStyle(() => {
         return {
@@ -73,15 +92,20 @@ export default function CreateWorkoutSchedule({
         if (!isWorkoutSelected) {
             Toast.show({
                 type: "error",
-                text1: "선택한 운동이 없습니다."
+                text1: "선택한 운동이 없습니다.",
             });
             return;
         }
-        
-        if (mode === 'planning') {
+
+        if (mode === "planning") { 
+            // Planning Mode
             setShowSaveDialog(true);
-        } else {
-            // TODO: 운동 시작 화면으로 이동
+        } else { 
+            // Quick Mode
+            if (onWorkoutSelect) {
+                onWorkoutSelect(checkedWorkouts);
+            }
+            dispatch(setShowWorkoutSession(true));
             onDismiss();
         }
     };
@@ -90,7 +114,7 @@ export default function CreateWorkoutSchedule({
         if (!routineName.trim()) {
             Toast.show({
                 type: "error",
-                text1: "루틴 이름을 입력해주세요."
+                text1: "루틴 이름을 입력해주세요.",
             });
             return;
         }
@@ -100,7 +124,7 @@ export default function CreateWorkoutSchedule({
         setShowSaveDialog(false);
         Toast.show({
             type: "success",
-            text1: "루틴이 저장되었습니다."
+            text1: "루틴이 저장되었습니다.",
         });
         onDismiss();
     };
@@ -123,7 +147,9 @@ export default function CreateWorkoutSchedule({
                         variant="headlineSmall"
                         style={{ color: theme.colors.onSurface }}
                     >
-                        {mode === 'quick' ? '빠른 운동 시작' : '운동 루틴 만들기'}
+                        {mode === "quick"
+                            ? "빠른 운동 시작"
+                            : "운동 루틴 만들기"}
                     </Text>
                     <IconButton
                         icon="close"
@@ -141,7 +167,7 @@ export default function CreateWorkoutSchedule({
                     <WorkoutPresetList
                         selectedCategories={selectedCategories}
                     />
-                    
+
                     {showSaveDialog ? (
                         <View style={styles.saveDialog}>
                             <TextInput
@@ -152,15 +178,15 @@ export default function CreateWorkoutSchedule({
                                 mode="outlined"
                             />
                             <View style={styles.dialogButtons}>
-                                <Button 
-                                    mode="outlined" 
+                                <Button
+                                    mode="outlined"
                                     onPress={() => setShowSaveDialog(false)}
                                     style={styles.dialogButton}
                                 >
                                     취소
                                 </Button>
-                                <Button 
-                                    mode="contained" 
+                                <Button
+                                    mode="contained"
                                     onPress={handleSaveRoutine}
                                     style={styles.dialogButton}
                                 >
@@ -169,9 +195,9 @@ export default function CreateWorkoutSchedule({
                             </View>
                         </View>
                     ) : (
-                        <StartWorkoutButton 
+                        <StartWorkoutButton
                             onPress={handleStartWorkout}
-                            text={mode === 'quick' ? '운동 시작' : '루틴 저장'}
+                            text={mode === "quick" ? "운동 시작" : "루틴 저장"}
                         />
                     )}
                 </View>
@@ -201,7 +227,7 @@ const styles = StyleSheet.create({
     },
     saveDialog: {
         padding: 16,
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
         borderRadius: 12,
         margin: 16,
     },
@@ -209,8 +235,8 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     dialogButtons: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
+        flexDirection: "row",
+        justifyContent: "flex-end",
         gap: 8,
     },
     dialogButton: {
