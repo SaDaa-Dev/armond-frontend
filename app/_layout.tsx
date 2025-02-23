@@ -19,8 +19,7 @@ import { Provider } from "react-redux";
 // React Native Debugger 설정
 if (__DEV__) {
     // @ts-ignore
-    global.XMLHttpRequest =
-        global.originalXMLHttpRequest || global.XMLHttpRequest;
+    global.XMLHttpRequest = global.originalXMLHttpRequest || global.XMLHttpRequest;
     // @ts-ignore
     global.FormData = global.originalFormData || global.FormData;
 

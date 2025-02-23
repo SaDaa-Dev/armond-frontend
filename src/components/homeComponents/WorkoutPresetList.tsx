@@ -5,60 +5,79 @@ import { List } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { addCheckedWorkout, removeCheckedWorkout } from '@/src/store/features/workoutSlice';
 import { useWorkout } from '@/src/hooks/useWorkout';
+import { useExercises } from '@/src/hooks/useWorkoutQuery';
 
-const WORKOUT_PRESETS = {
-    chest: [
-        { id: 1, title: "벤치프레스", subtitle: "가슴 운동의 기본" },
-        { id: 2, title: "인클라인 덤벨 프레스", subtitle: "상부 가슴 강화" },
-        { id: 3, title: "딥스", subtitle: "하부 가슴과 삼두" },
-    ],
-    back: [
-        { id: 7, title: "데드리프트", subtitle: "전신 운동" },
-        { id: 8, title: "풀업", subtitle: "등근육 발달" },
-    ],
-};
 
 interface WorkoutPresetListProps {
     selectedCategories: string[];
 }
 
+interface Exercise {
+    id: number;
+    name: string;
+    description: string;
+    muscleCategories: string;
+}
+
+interface ExerciseResponse {
+    status: string;
+    message: string;
+    data: Exercise[];
+    error: null | string;
+}
+
+
 export default function WorkoutPresetList({ selectedCategories }: WorkoutPresetListProps) {
     const dispatch = useDispatch();
     const { checkedWorkouts } = useWorkout();
+    const { data: exercisesResponse } = useExercises();
 
     const getFilteredWorkouts = () => {
-        if (selectedCategories.length === 0) return [];
-        return selectedCategories.flatMap(
-            (category) => WORKOUT_PRESETS[category as keyof typeof WORKOUT_PRESETS] || []
-        );
+        if (!exercisesResponse?.data || selectedCategories.length === 0) return [];
+        
+        const categoryMapping: { [key: string]: string } = {
+            'chest': 'Pectoralis',
+            'back': 'Back',
+            'arms': 'Arms',
+            'shoulders': 'Shoulders',
+            'legs': 'Lower Body',
+            'core': 'Core'
+        };
+
+        return exercisesResponse.data.filter((exercise: Exercise) => {
+            const exerciseCategories = exercise.muscleCategories.split(',');
+            return selectedCategories.some(category => 
+                exerciseCategories.includes(categoryMapping[category])
+            );
+        });
     };
 
     return (
         <ScrollView style={styles.workoutList} showsVerticalScrollIndicator={false}>
-            {getFilteredWorkouts().map((workout) => (
+            {getFilteredWorkouts().map((exercise : Exercise) => (
                 <List.Item
-                    key={workout.id}
-                    title={workout.title}
+                    key={exercise.id}
+                    title={exercise.name}
                     titleStyle={styles.listItemTitle}
-                    description={workout.subtitle}
+                    description={exercise.description}
                     descriptionStyle={styles.listItemDescription}
                     left={(props) => (
                         <List.Icon
                             {...props}
-                            icon={checkedWorkouts.includes(workout.id) ? "check-circle" : "dumbbell"}
-                            color={checkedWorkouts.includes(workout.id) ? "#4CAF50" : "#8A2BE2"}
+                            icon={checkedWorkouts.includes(exercise.id) ? "check-circle" : "dumbbell"}
+                            color={checkedWorkouts.includes(exercise.id) ? "#4CAF50" : "#8A2BE2"}
                         />
                     )}
                     onPress={() => {
-                        if(checkedWorkouts.includes(workout.id)) {
-                            dispatch(removeCheckedWorkout(workout.id))
+                        if(checkedWorkouts.includes(exercise.id)) {
+                            dispatch(removeCheckedWorkout(exercise.id))
                         } else {
-                            dispatch(addCheckedWorkout(workout.id))
+                            dispatch(addCheckedWorkout(exercise.id))
                         }
                     }}
                     style={[
                         styles.listItem,
-                        checkedWorkouts.includes(workout.id) && styles.checkedItem,
+                        checkedWorkouts.includes(exercise.id) && styles.checkedItem,
                     ]}
                     rippleColor="rgba(138, 43, 226, 0.1)"
                 />

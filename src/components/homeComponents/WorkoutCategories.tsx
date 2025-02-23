@@ -37,7 +37,7 @@ export default function WorkoutCategories({ selectedCategories, onCategoryPress 
                         selectedCategories.includes(category.id) && styles.selectedChipText,
                     ]}
                     showSelectedCheck={false}
-                >
+                >   
                     {category.label}
                 </Chip>
             ))}
