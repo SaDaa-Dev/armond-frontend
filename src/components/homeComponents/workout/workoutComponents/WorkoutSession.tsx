@@ -1,18 +1,26 @@
 import { useWorkout } from "@/src/hooks/useWorkout";
-import { setShowWorkoutSession } from "@/src/store/features/workoutSlice";
+import { 
+    setShowWorkoutSession, 
+    setActiveWorkoutSession, 
+    updateWorkoutSession,
+    clearCheckedWorkouts 
+} from "@/src/store/features/workoutSlice";
 import React, { useEffect, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, View, Animated } from "react-native";
 import {
     Button,
     Card,
     IconButton,
-    Modal,
+    Portal,
     Text,
-    TextInput
+    TextInput,
+    useTheme
 } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "../../CreateWorkoutSchedule";
-
+import { useExercises } from "@/src/hooks/useWorkoutQuery";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import WorkoutSessionFooter from "./WorkoutSessionFooter";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface WorkoutSet {
@@ -28,50 +36,98 @@ interface WorkoutExercise {
     isExpanded?: boolean;
 }
 
-const WORKOUT_PRESETS = {
-    chest: [
-        { id: 1, title: "벤치프레스", subtitle: "가슴 운동의 기본" },
-        { id: 2, title: "인클라인 덤벨 프레스", subtitle: "상부 가슴 강화" },
-        { id: 3, title: "딥스", subtitle: "하부 가슴과 삼두" },
-    ],
-    back: [
-        { id: 4, title: "데드리프트", subtitle: "전신 운동" },
-        { id: 5, title: "풀업", subtitle: "등근육 발달" },
-    ],
-};
-
 export default function WorkoutSession() {
     const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
     const [showAddWorkout, setShowAddWorkout] = useState(false);
-    const { showWorkoutSession, checkedWorkouts } = useWorkout();
+    const { showWorkoutSession, checkedWorkouts, activeWorkoutSession } = useWorkout();
+    const { data: exercisesResponse } = useExercises();
     const dispatch = useDispatch();
+    const theme = useTheme();
+    const insets = useSafeAreaInsets();
+    const slideAnim = React.useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+    useEffect(() => {
+        if (showWorkoutSession) {
+            // 화면을 올리는 애니메이션
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                useNativeDriver: true,
+                tension: 50,
+                friction: 7
+            }).start();
+        } 
+        else {
+            // 화면을 내리는 애니메이션
+            Animated.spring(slideAnim, {
+                toValue: SCREEN_HEIGHT,
+                useNativeDriver: true,
+                tension: 50,
+                friction: 7
+            }).start();
+        }
+    }, [showWorkoutSession]);
+
+    useEffect(() => {
+        if (checkedWorkouts.length > 0 && exercisesResponse?.data) {
+            if (!activeWorkoutSession) {
+                const initialExercises: WorkoutExercise[] = checkedWorkouts.map(
+                    (workoutId: number) => {
+                        const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
+    
+                        return {
+                            id: workoutId,
+                            title: workout?.name || "알 수 없는 운동",
+                            sets: [{ weight: "", reps: "", completed: false }],
+                            isExpanded: true,
+                        };
+                    }
+                );
+                setExercises(initialExercises);
+                dispatch(setActiveWorkoutSession({ exercises: initialExercises, isActive: true }));
+            }
+        }
+    }, [checkedWorkouts, exercisesResponse, activeWorkoutSession]);
 
     const handleDismiss = () => {
         dispatch(setShowWorkoutSession(false));
+        dispatch(updateWorkoutSession(exercises));
+        Animated.spring(slideAnim, {
+            toValue: SCREEN_HEIGHT,
+            useNativeDriver: true,
+            tension: 45,
+            friction: 8
+        }).start();
     };
 
-    useEffect(() => {
-        if (checkedWorkouts.length > 0) {
-            const initialExercises: WorkoutExercise[] = checkedWorkouts.map(
-                (workoutId: number) => {
-                    const workout = Object.values(WORKOUT_PRESETS)
-                        .flat()
-                        .find((w) => w.id === workoutId);
+    const handleCompleteWorkout = () => {
+        dispatch(setShowWorkoutSession(false));
+        dispatch(updateWorkoutSession(exercises));
+        dispatch(setActiveWorkoutSession(null));
+        dispatch(clearCheckedWorkouts());
+        Animated.spring(slideAnim, {
+            toValue: SCREEN_HEIGHT,
+            useNativeDriver: true,
+            tension: 45,
+            friction: 8
+        }).start();
+    };
 
-                    return {
-                        id: workoutId,
-                        title: workout?.title || "알 수 없는 운동",
-                        sets: [{ weight: "", reps: "", completed: false }],
-                        isExpanded: true,
-                    };
-                }
-            );
-            setExercises(initialExercises);
-        }
-    }, [checkedWorkouts]);
+    const handleStopWorkout = () => {
+        dispatch(setShowWorkoutSession(false));
+        dispatch(setActiveWorkoutSession(null));
+        dispatch(clearCheckedWorkouts());
+        Animated.spring(slideAnim, {
+            toValue: SCREEN_HEIGHT,
+            useNativeDriver: true,
+            tension: 45,
+            friction: 8
+        }).start();
+    };
 
     // 새로운 운동 추가 처리
     const handleNewWorkouts = (newWorkouts: number[]) => {
+        if (!exercisesResponse?.data) return;
+
         const existingIds = new Set(exercises.map((exercise) => exercise.id));
         const filteredNewWorkouts = newWorkouts.filter(
             (id) => !existingIds.has(id)
@@ -82,13 +138,11 @@ export default function WorkoutSession() {
         }
 
         const newExercises = filteredNewWorkouts.map((workoutId) => {
-            const workout = Object.values(WORKOUT_PRESETS)
-                .flat()
-                .find((w) => w.id === workoutId);
+            const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
 
             return {
                 id: workoutId,
-                title: workout?.title || "알 수 없는 운동",
+                title: workout?.name || "알 수 없는 운동",
                 sets: [{ weight: "", reps: "", completed: false }],
                 isExpanded: true,
             };
@@ -168,166 +222,170 @@ export default function WorkoutSession() {
         );
     };
 
-    return (
-        <Modal
-            visible={showWorkoutSession}
-            onDismiss={handleDismiss}
-            contentContainerStyle={[styles.modalContainer, { margin: 0 }]} 
-            style={[styles.modal, { width: '100%', height: '100%' }]}
-        >
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <Text variant="headlineSmall" style={styles.headerTitle}>
-                        운동 세션
-                    </Text>
-                    <IconButton
-                        icon="close"
-                        onPress={handleDismiss}
-                        style={styles.closeButton}
-                    />
-                </View>
 
-                <ScrollView style={styles.scrollView}>
-                    {exercises.map((exercise) => (
-                        <Card key={exercise.id} style={styles.exerciseCard}>
-                            <Card.Title
-                                title={exercise.title}
-                                right={(props) => (
-                                    <IconButton
-                                        {...props}
-                                        icon={
-                                            exercise.isExpanded
-                                                ? "chevron-up"
-                                                : "chevron-down"
-                                        }
-                                        onPress={() =>
-                                            handleToggleExpand(exercise.id)
-                                        }
-                                    />
-                                )}
+    return (
+        <Portal>
+            {showWorkoutSession && (
+                <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
+                    <Animated.View 
+                        style={[
+                            styles.container, 
+                            { 
+                                paddingTop: insets.top,
+                                transform: [{ translateY: slideAnim }] 
+                            }
+                        ]}
+                    >
+                        <View style={styles.header}>
+                            <Text variant="headlineSmall" style={styles.headerTitle}>
+                                운동 세션
+                            </Text>
+                            <IconButton
+                                icon="close"
+                                onPress={handleDismiss}
+                                style={styles.closeButton}
                             />
-                            {exercise.isExpanded && (
-                                <Card.Content>
-                                    <View style={styles.setsHeader}>
-                                        <Text style={styles.setLabel}>
-                                            세트
-                                        </Text>
-                                        <Text style={styles.weightLabel}>
-                                            무게(kg)
-                                        </Text>
-                                        <Text style={styles.repsLabel}>
-                                            횟수
-                                        </Text>
-                                        <Text style={styles.completedLabel}>
-                                            완료
-                                        </Text>
-                                    </View>
-                                    {exercise.sets.map((set, index) => (
-                                        <View key={index} style={styles.setRow}>
-                                            <Text style={styles.setNumber}>
-                                                {index + 1}
-                                            </Text>
-                                            <TextInput
-                                                style={styles.input}
-                                                value={set.weight}
-                                                onChangeText={(value) =>
-                                                    handleUpdateSet(
-                                                        exercise.id,
-                                                        index,
-                                                        "weight",
-                                                        value
-                                                    )
-                                                }
-                                                keyboardType="numeric"
-                                                mode="outlined"
-                                                dense
-                                            />
-                                            <TextInput
-                                                style={styles.input}
-                                                value={set.reps}
-                                                onChangeText={(value) =>
-                                                    handleUpdateSet(
-                                                        exercise.id,
-                                                        index,
-                                                        "reps",
-                                                        value
-                                                    )
-                                                }
-                                                keyboardType="numeric"
-                                                mode="outlined"
-                                                dense
-                                            />
+                        </View>
+
+                        <ScrollView style={styles.scrollView}>
+                            {exercises.map((exercise) => (
+                                <Card key={exercise.id} style={styles.exerciseCard}>
+                                    <Card.Title
+                                        title={exercise.title}
+                                        right={(props) => (
                                             <IconButton
+                                                {...props}
                                                 icon={
-                                                    set.completed
-                                                        ? "check-circle"
-                                                        : "circle-outline"
+                                                    exercise.isExpanded
+                                                        ? "chevron-up"
+                                                        : "chevron-down"
                                                 }
                                                 onPress={() =>
-                                                    handleToggleSet(
-                                                        exercise.id,
-                                                        index
-                                                    )
+                                                    handleToggleExpand(exercise.id)
                                                 }
-                                                size={24}
                                             />
-                                        </View>
-                                    ))}
-                                    <Button
-                                        mode="text"
-                                        icon="plus"
-                                        onPress={() =>
-                                            handleAddSet(exercise.id)
-                                        }
-                                        style={styles.addSetButton}
-                                    >
-                                        세트 추가
-                                    </Button>
-                                </Card.Content>
-                            )}
-                        </Card>
-                    ))}
-                    <Button
-                        mode="outlined"
-                        onPress={() => setShowAddWorkout(true)}
-                        style={styles.addWorkoutButton}
-                        icon="plus"
-                    >
-                        운동 추가하기
-                    </Button>
-                </ScrollView>
+                                        )}
+                                    />
+                                    {exercise.isExpanded && (
+                                        <Card.Content>
+                                            <View style={styles.setsHeader}>
+                                                <Text style={styles.setLabel}>
+                                                    세트
+                                                </Text>
+                                                <Text style={styles.weightLabel}>
+                                                    무게(kg)
+                                                </Text>
+                                                <Text style={styles.repsLabel}>
+                                                    횟수
+                                                </Text>
+                                                <Text style={styles.completedLabel}>
+                                                    완료
+                                                </Text>
+                                            </View>
+                                            {exercise.sets.map((set, index) => (
+                                                <View key={index} style={styles.setRow}>
+                                                    <Text style={styles.setNumber}>
+                                                        {index + 1}
+                                                    </Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        value={set.weight}
+                                                        onChangeText={(value) =>
+                                                            handleUpdateSet(
+                                                                exercise.id,
+                                                                index,
+                                                                "weight",
+                                                                value
+                                                            )
+                                                        }
+                                                        keyboardType="numeric"
+                                                        mode="outlined"
+                                                        dense
+                                                    />
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        value={set.reps}
+                                                        onChangeText={(value) =>
+                                                            handleUpdateSet(
+                                                                exercise.id,
+                                                                index,
+                                                                "reps",
+                                                                value
+                                                            )
+                                                        }
+                                                        keyboardType="numeric"
+                                                        mode="outlined"
+                                                        dense
+                                                    />
+                                                    <IconButton
+                                                        icon={
+                                                            set.completed
+                                                                ? "check-circle"
+                                                                : "circle-outline"
+                                                        }
+                                                        onPress={() =>
+                                                            handleToggleSet(
+                                                                exercise.id,
+                                                                index
+                                                            )
+                                                        }
+                                                        size={24}
+                                                    />
+                                                </View>
+                                            ))}
+                                            <Button
+                                                mode="text"
+                                                icon="plus"
+                                                onPress={() =>
+                                                    handleAddSet(exercise.id)
+                                                }
+                                                style={styles.addSetButton}
+                                            >
+                                                세트 추가
+                                            </Button>
+                                        </Card.Content>
+                                    )}
+                                </Card>
+                            ))}
+                            <Button
+                                mode="outlined"
+                                onPress={() => setShowAddWorkout(true)}
+                                style={styles.addWorkoutButton}
+                                icon="plus"
+                            >
+                                운동 추가하기
+                            </Button>
+                        </ScrollView>
 
-                <View style={styles.footer}>
-                    <Button
-                        mode="contained"
-                        onPress={handleDismiss}
-                        style={styles.completeButton}
-                        icon="check"
-                    >
-                        운동 완료하기
-                    </Button>
+                        {/* Footer */}
+                        <WorkoutSessionFooter 
+                            handleCompleteWorkout={handleCompleteWorkout}
+                            handleStopWorkout={handleStopWorkout}
+                        />
+                    
+                        <CreateWorkoutSchedule
+                            visible={showAddWorkout}
+                            onDismiss={() => setShowAddWorkout(false)}
+                            mode="quick"
+                            onWorkoutSelect={handleNewWorkouts}
+                        />
+                    </Animated.View>
                 </View>
-
-                <CreateWorkoutSchedule
-                    visible={showAddWorkout}
-                    onDismiss={() => setShowAddWorkout(false)}
-                    mode="quick"
-                    onWorkoutSelect={handleNewWorkouts}
-                />
-            </View>
-        </Modal>
+            )}
+        </Portal>
     );
 }
 
 const styles = StyleSheet.create({
-    modal: {
-        margin: 0,
-    },
     modalContainer: {
-        flex: 1,
-        width: SCREEN_WIDTH,
-        height: SCREEN_HEIGHT,
-        margin: 0,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 1000,
     },
     container: {
         flex: 1,
@@ -353,7 +411,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     exerciseCard: {
-        marginBottom: 16,
+        marginBottom: 8,
         backgroundColor: "rgba(255, 255, 255, 0.08)",
         borderRadius: 12,
     },
@@ -397,17 +455,9 @@ const styles = StyleSheet.create({
         height: 40,
         backgroundColor: "transparent",
     },
-    footer: {
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255, 255, 255, 0.1)",
-    },
     addWorkoutButton: {
         marginVertical: 16,
         borderColor: "rgba(255, 255, 255, 0.3)",
-    },
-    completeButton: {
-        backgroundColor: "#4CAF50",
     },
     addSetButton: {
         marginTop: 8,

@@ -6,11 +6,34 @@ interface WorkoutRoutine {
     workouts: number[];
 }
 
+interface Exercise {
+    id: number;
+    name: string;
+    description: string;
+    muscleCategories: string;
+}
+
 interface WorkoutState {
     checkedWorkout: number[];
     count: number;
     routines: WorkoutRoutine[];
     showWorkoutSession: boolean;
+    exercises: Exercise[];
+    isLoading: boolean;
+    error: string | null;
+    activeWorkoutSession: {
+        exercises: Array<{
+            id: number;
+            title: string;
+            sets: Array<{
+                weight: string;
+                reps: string;
+                completed: boolean;
+            }>;
+            isExpanded?: boolean;
+        }> | null;
+        isActive: boolean;
+    } | null;
 }
 
 const initialState: WorkoutState = {
@@ -18,6 +41,10 @@ const initialState: WorkoutState = {
     count: 0,
     routines: [],
     showWorkoutSession: false,
+    exercises: [],
+    isLoading: false,
+    error: null,
+    activeWorkoutSession: null,
 };
 
 export const workoutSlice = createSlice({
@@ -32,6 +59,9 @@ export const workoutSlice = createSlice({
         },
         removeCheckedWorkout: (state, action: PayloadAction<number>) => {
             state.checkedWorkout = state.checkedWorkout.filter(id => id !== action.payload);
+        },
+        clearCheckedWorkouts: (state) => {
+            state.checkedWorkout = [];
         },
         saveWorkoutRoutine: (state, action: PayloadAction<{ name: string }>) => {
             const newRoutine: WorkoutRoutine = {
@@ -54,6 +84,23 @@ export const workoutSlice = createSlice({
         incrementByAmount: (state, action: PayloadAction<number>) => {
             state.count += action.payload;
         },
+        setExercises: (state, action: PayloadAction<Exercise[]>) => {
+            state.exercises = action.payload;
+        },
+        setLoading: (state, action: PayloadAction<boolean>) => {
+            state.isLoading = action.payload;
+        },
+        setError: (state, action: PayloadAction<string | null>) => {
+            state.error = action.payload;
+        },
+        setActiveWorkoutSession: (state, action) => {
+            state.activeWorkoutSession = action.payload;
+        },
+        updateWorkoutSession: (state, action) => {
+            if (state.activeWorkoutSession) {
+                state.activeWorkoutSession.exercises = action.payload;
+            }
+        },
     },
 });
 
@@ -63,8 +110,14 @@ export const {
     incrementByAmount, 
     addCheckedWorkout, 
     removeCheckedWorkout,
+    clearCheckedWorkouts,
     saveWorkoutRoutine,
     deleteWorkoutRoutine,
     setShowWorkoutSession,
+    setExercises,
+    setLoading,
+    setError,
+    setActiveWorkoutSession,
+    updateWorkoutSession,
 } = workoutSlice.actions;
 export default workoutSlice.reducer; 

@@ -6,12 +6,14 @@ export const useWorkout = () => {
     const count = useSelector((state: RootState) => state.workout.count);
     const routines = useSelector((state: RootState) => state.workout.routines);
     const showWorkoutSession = useSelector((state: RootState) => state.workout.showWorkoutSession);
+    const activeWorkoutSession = useSelector((state: RootState) => state.workout.activeWorkoutSession);
 
     return {
         checkedWorkouts,
         count,
         routines,
         showWorkoutSession,
-        isWorkoutSelected: checkedWorkouts.length > 0
+        activeWorkoutSession,
+        isWorkoutSelected: checkedWorkouts.length > 0,
     };
 }; 

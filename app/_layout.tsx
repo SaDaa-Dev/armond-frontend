@@ -7,6 +7,7 @@ declare global {
 
 import { store } from "@/src/store/configureStore";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useReactQueryDevTools } from '@dev-plugins/react-query';
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
@@ -51,7 +52,8 @@ const darkTheme = {
 
 export default function RootLayout() {
     const isAuthenticated = true;
-
+    useReactQueryDevTools(queryClient);
+    
     return (
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>

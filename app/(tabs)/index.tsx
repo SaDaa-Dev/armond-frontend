@@ -1,11 +1,23 @@
 import WorkoutFooter from "@/src/components/homeComponents/WorkoutFooter";
 import WorkoutList from "@/src/components/homeComponents/WorkoutList";
-import React from "react";
+import { useExercises } from "@/src/hooks/useWorkoutQuery";
+import { useWorkout } from "@/src/hooks/useWorkout";
+import { setExercises, setShowWorkoutSession } from "@/src/store/features/workoutSlice";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { useTheme } from "react-native-paper";
+import { useTheme, Button } from "react-native-paper";
+import { useDispatch } from "react-redux";
 
 export default function HomeScreen() {
     const theme = useTheme();
+    const dispatch = useDispatch();
+    const { data: exercisePresets } = useExercises();
+
+    useEffect(() => {
+        if (exercisePresets?.data) {
+            dispatch(setExercises(exercisePresets.data));
+        }
+    }, [exercisePresets]);
 
     return (
         <View
@@ -17,6 +29,8 @@ export default function HomeScreen() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <WorkoutList />
             </ScrollView>
+            
+            {/* Footer */}
             <WorkoutFooter />
         </View>
     );
@@ -28,5 +42,10 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         padding: 2,
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

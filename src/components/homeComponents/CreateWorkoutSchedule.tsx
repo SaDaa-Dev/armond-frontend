@@ -2,11 +2,16 @@ import { useWorkout } from "@/src/hooks/useWorkout";
 import {
     saveWorkoutRoutine,
     setShowWorkoutSession,
+    removeCheckedWorkout,
+    clearCheckedWorkouts,
+    setActiveWorkoutSession,
 } from "@/src/store/features/workoutSlice";
+import { useExercises } from "@/src/hooks/useWorkoutQuery";
 import React, { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, View, ScrollView } from "react-native";
 import {
     Button,
+    Chip,
     IconButton,
     Portal,
     Text,
@@ -26,6 +31,13 @@ import WorkoutCategories from "./WorkoutCategories";
 import WorkoutPresetList from "./WorkoutPresetList";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+
+interface Exercise {
+    id: number;
+    name: string;
+    description: string;
+    muscleCategories: string;
+}
 
 interface CreateWorkoutScheduleProps {
     visible: boolean;
@@ -57,6 +69,7 @@ export default function CreateWorkoutSchedule({
     const insets = useSafeAreaInsets();
     const { checkedWorkouts, isWorkoutSelected } = useWorkout();
     const dispatch = useDispatch();
+    const { data: exercisesResponse } = useExercises();
 
     const rBottomSheetStyle = useAnimatedStyle(() => {
         return {
@@ -105,6 +118,19 @@ export default function CreateWorkoutSchedule({
             if (onWorkoutSelect) {
                 onWorkoutSelect(checkedWorkouts);
             }
+
+            // 선택된 운동들로 초기 세션 생성
+            const initialExercises = checkedWorkouts.map((workoutId) => {
+                const workout = exercisesResponse?.data.find((w: Exercise) => w.id === workoutId);
+                return {
+                    id: workoutId,
+                    title: workout?.name || "알 수 없는 운동",
+                    sets: [{ weight: "", reps: "", completed: false }],
+                    isExpanded: true,
+                };
+            });
+
+            dispatch(setActiveWorkoutSession({ exercises: initialExercises, isActive: true }));
             dispatch(setShowWorkoutSession(true));
             onDismiss();
         }
@@ -160,10 +186,48 @@ export default function CreateWorkoutSchedule({
                 </View>
 
                 <View style={styles.contentContainer}>
+                    {/* 운동 카테고리 컴포넌트 */}
                     <WorkoutCategories
                         selectedCategories={selectedCategories}
                         onCategoryPress={handleCategoryPress}
                     />
+
+                    {/* 선택된 운동 목록 컴포넌트 */}
+                    {checkedWorkouts.length > 0 && (    
+                        <View style={styles.selectedWorkoutsContainer}>
+                            <Text
+                                variant="titleMedium"
+                                style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+                            >
+                                선택된 운동 ({checkedWorkouts.length})
+                            </Text>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.selectedWorkoutsList}
+                            >
+                                {checkedWorkouts.map((workoutId) => {
+                                    const workout = exercisesResponse?.data.find(
+                                        (exercise: Exercise) => exercise.id === workoutId
+                                    );
+                                    if (!workout) return null;
+
+                                    return (
+                                        <Chip
+                                            key={workout.id}
+                                            mode="outlined"
+                                            onClose={() => dispatch(removeCheckedWorkout(workout.id))}
+                                            style={styles.selectedWorkoutChip}
+                                            textStyle={{ color: theme.colors.onSurface }}
+                                        >
+                                            {workout.name}
+                                        </Chip>
+                                    );
+                                })}
+                            </ScrollView>
+                        </View>
+                    )}
+
                     <WorkoutPresetList
                         selectedCategories={selectedCategories}
                     />
@@ -241,5 +305,20 @@ const styles = StyleSheet.create({
     },
     dialogButton: {
         minWidth: 100,
+    },
+    selectedWorkoutsContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+    },
+    sectionTitle: {
+        marginBottom: 8,
+    },
+    selectedWorkoutsList: {
+        flexGrow: 0,
+    },
+    selectedWorkoutChip: {
+        marginRight: 8,
+        marginBottom: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
     },
 });

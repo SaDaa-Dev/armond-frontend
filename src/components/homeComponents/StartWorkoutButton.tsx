@@ -20,7 +20,6 @@ export default function StartWorkoutButton({ onPress, text = "운동 시작" }: 
                 fontWeight: "bold",
             }}
             onPress={onPress}
-            disabled={!isWorkoutSelected}
         >
             <Text style={{ color: "#FFFFFF" }}>{text}</Text>
         </Button>

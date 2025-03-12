@@ -1,33 +1,38 @@
 import CustomButton from "@/src/components/common/Button/CustomButton";
 import { useWorkout } from "@/src/hooks/useWorkout";
+import { setShowWorkoutSession } from "@/src/store/features/workoutSlice";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { List, Modal, Portal } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
-import { setShowWorkoutSession } from "@/src/store/features/workoutSlice";
 import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
 
 export default function WorkoutFooter() {
     const [quickStartVisible, setQuickStartVisible] = useState(false);
     const [planningModalVisible, setPlanningModalVisible] = useState(false);
-    const { showWorkoutSession, checkedWorkouts } = useWorkout();
+    const { showWorkoutSession, checkedWorkouts, isWorkoutSelected, activeWorkoutSession } = useWorkout();
     const dispatch = useDispatch();
-
-    const handleQuickStart = () => {
-        setQuickStartVisible(true);
-    };
 
     const handlePlanningPress = () => {
         setPlanningModalVisible(true);
+    };
+
+    const handlePress = () => {
+        if (activeWorkoutSession) {
+            dispatch(setShowWorkoutSession(true));
+        }else{
+            setQuickStartVisible(true);
+        }
     };
 
     return (
         <>
             <View style={styles.footer}>
                 <CustomButton
-                    text="운동 바로시작"
-                    onPress={handleQuickStart}
+                    mode="contained"
+                    onPress={handlePress}
+                    text={activeWorkoutSession ? "이어하기" : "운동 바로시작"}
                 />
                 <CustomButton
                     text="계획하기"
@@ -43,6 +48,7 @@ export default function WorkoutFooter() {
                 mode="quick"
             />
 
+            {/* 운동 세션 모달 */}
             <WorkoutSession />
 
             {/* 계획하기 모달 */}
@@ -97,5 +103,5 @@ const styles = StyleSheet.create({
         margin: 20,
         padding: 20,
         borderRadius: 12,
-    },
+    }
 }); 
