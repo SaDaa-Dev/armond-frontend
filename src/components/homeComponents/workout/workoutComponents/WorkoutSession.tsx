@@ -69,7 +69,7 @@ export default function WorkoutSession() {
 
     useEffect(() => {
         if (checkedWorkouts.length > 0 && exercisesResponse?.data) {
-            if (!activeWorkoutSession) {
+            if (!activeWorkoutSession && showWorkoutSession) {
                 const initialExercises: WorkoutExercise[] = checkedWorkouts.map(
                     (workoutId: number) => {
                         const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
@@ -84,9 +84,11 @@ export default function WorkoutSession() {
                 );
                 setExercises(initialExercises);
                 dispatch(setActiveWorkoutSession({ exercises: initialExercises, isActive: true }));
+            } else if (activeWorkoutSession?.exercises) {
+                setExercises(activeWorkoutSession.exercises);
             }
         }
-    }, [checkedWorkouts, exercisesResponse, activeWorkoutSession]);
+    }, [checkedWorkouts, exercisesResponse, activeWorkoutSession, showWorkoutSession]);
 
     const handleDismiss = () => {
         dispatch(setShowWorkoutSession(false));

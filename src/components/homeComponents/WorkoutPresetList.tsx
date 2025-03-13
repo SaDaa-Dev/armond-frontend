@@ -1,11 +1,11 @@
+import { useWorkout } from '@/src/hooks/useWorkout';
+import { useExercises } from '@/src/hooks/useWorkoutQuery';
+import { addCheckedWorkout, removeCheckedWorkout } from '@/src/store/features/workoutSlice';
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { List } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
-import { addCheckedWorkout, removeCheckedWorkout } from '@/src/store/features/workoutSlice';
-import { useWorkout } from '@/src/hooks/useWorkout';
-import { useExercises } from '@/src/hooks/useWorkoutQuery';
 
 
 interface WorkoutPresetListProps {
@@ -17,13 +17,6 @@ interface Exercise {
     name: string;
     description: string;
     muscleCategories: string;
-}
-
-interface ExerciseResponse {
-    status: string;
-    message: string;
-    data: Exercise[];
-    error: null | string;
 }
 
 

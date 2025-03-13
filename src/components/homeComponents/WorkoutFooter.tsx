@@ -11,7 +11,7 @@ import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
 export default function WorkoutFooter() {
     const [quickStartVisible, setQuickStartVisible] = useState(false);
     const [planningModalVisible, setPlanningModalVisible] = useState(false);
-    const { showWorkoutSession, checkedWorkouts, isWorkoutSelected, activeWorkoutSession } = useWorkout();
+    const { activeWorkoutSession } = useWorkout();
     const dispatch = useDispatch();
 
     const handlePlanningPress = () => {
