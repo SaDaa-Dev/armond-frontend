@@ -1,6 +1,6 @@
 import CustomButton from "@/src/components/common/Button/CustomButton";
 import { useWorkout } from "@/src/hooks/useWorkout";
-import { setShowWorkoutSession } from "@/src/store/features/workoutSlice";
+import { setShowWorkoutSession, setWorkoutMode } from "@/src/store/features/workoutSlice";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { List, Modal, Portal } from "react-native-paper";
@@ -9,20 +9,23 @@ import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
 import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
 
 export default function WorkoutFooter() {
-    const [quickStartVisible, setQuickStartVisible] = useState(false);
-    const [planningModalVisible, setPlanningModalVisible] = useState(false);
+    const [quickStartVisible, setWorkoutStartModal] = useState(false);
+    const [planningModalVisible, setShowEtcOptionModalVisible] = useState(false);
     const { activeWorkoutSession } = useWorkout();
     const dispatch = useDispatch();
 
-    const handlePlanningPress = () => {
-        setPlanningModalVisible(true);
+    const handleEtcOptionPress = () => {
+        setShowEtcOptionModalVisible(true);
     };
 
     const handlePress = () => {
         if (activeWorkoutSession) {
+            // 이어하기
             dispatch(setShowWorkoutSession(true));
         }else{
-            setQuickStartVisible(true);
+            // 운동 바로시작
+            setWorkoutStartModal(true);
+            dispatch(setWorkoutMode('quick'));
         }
     };
 
@@ -37,14 +40,14 @@ export default function WorkoutFooter() {
                 <CustomButton
                     text="계획하기"
                     mode="outlined"
-                    onPress={handlePlanningPress}
+                    onPress={handleEtcOptionPress}
                 />
             </View>
 
             {/* 빠른 시작 모드 */}
             <CreateWorkoutSchedule   
                 visible={quickStartVisible} 
-                onDismiss={() => setQuickStartVisible(false)}
+                onDismiss={() => setWorkoutStartModal(false)}
                 mode="quick"
             />
 
@@ -55,7 +58,7 @@ export default function WorkoutFooter() {
             <Portal>
                 <Modal
                     visible={planningModalVisible}
-                    onDismiss={() => setPlanningModalVisible(false)}
+                    onDismiss={() => setShowEtcOptionModalVisible(false)}
                     contentContainerStyle={styles.modalContainer}
                 >
                     <List.Section>
@@ -63,8 +66,9 @@ export default function WorkoutFooter() {
                             title="새 루틴 만들기"
                             left={props => <List.Icon {...props} icon="playlist-plus" />}
                             onPress={() => {
-                                setPlanningModalVisible(false);
-                                setQuickStartVisible(true);
+                                setShowEtcOptionModalVisible(false);
+                                dispatch(setWorkoutMode('planning'));
+                                setWorkoutStartModal(true);
                             }}
                         />
                         <List.Item
@@ -72,7 +76,7 @@ export default function WorkoutFooter() {
                             left={props => <List.Icon {...props} icon="playlist-edit" />}
                             onPress={() => {
                                 // TODO: 루틴 관리 화면으로 이동
-                                setPlanningModalVisible(false);
+                                setShowEtcOptionModalVisible(false);
                             }}
                         />
                         <List.Item
@@ -80,7 +84,7 @@ export default function WorkoutFooter() {
                             left={props => <List.Icon {...props} icon="history" />}
                             onPress={() => {
                                 // TODO: 운동 기록 화면으로 이동
-                                setPlanningModalVisible(false);
+                                setShowEtcOptionModalVisible(false);
                             }}
                         />
                     </List.Section>

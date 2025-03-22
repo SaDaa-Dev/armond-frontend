@@ -24,16 +24,17 @@ interface WorkoutState {
     activeWorkoutSession: {
         exercises: Array<{
             id: number;
-            title: string;
+            name: string;
             sets: Array<{
-                weight: string;
-                reps: string;
+                weight: number;
+                reps: number;
                 completed: boolean;
             }>;
             isExpanded?: boolean;
         }> | null;
         isActive: boolean;
     } | null;
+    workoutMode: string;
 }
 
 const initialState: WorkoutState = {
@@ -45,6 +46,7 @@ const initialState: WorkoutState = {
     isLoading: false,
     error: null,
     activeWorkoutSession: null,
+    workoutMode: '',
 };
 
 export const workoutSlice = createSlice({
@@ -101,6 +103,9 @@ export const workoutSlice = createSlice({
                 state.activeWorkoutSession.exercises = action.payload;
             }
         },
+        setWorkoutMode: (state, action: PayloadAction<string>) => {
+            state.workoutMode = action.payload;
+        },
     },
 });
 
@@ -119,5 +124,6 @@ export const {
     setError,
     setActiveWorkoutSession,
     updateWorkoutSession,
+    setWorkoutMode,
 } = workoutSlice.actions;
 export default workoutSlice.reducer; 

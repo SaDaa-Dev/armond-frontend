@@ -5,6 +5,7 @@ import {
     removeCheckedWorkout,
     clearCheckedWorkouts,
     setActiveWorkoutSession,
+    setWorkoutMode,
 } from "@/src/store/features/workoutSlice";
 import { useExercises } from "@/src/hooks/useWorkoutQuery";
 import React, { useEffect, useState } from "react";
@@ -113,6 +114,7 @@ export default function CreateWorkoutSchedule({
         if (mode === "planning") { 
             // Planning Mode
             setShowSaveDialog(true);
+            dispatch(setWorkoutMode('planning'));
         } else { 
             // Quick Mode
             if (onWorkoutSelect) {
@@ -124,13 +126,14 @@ export default function CreateWorkoutSchedule({
                 const workout = exercisesResponse?.data.find((w: Exercise) => w.id === workoutId);
                 return {
                     id: workoutId,
-                    title: workout?.name || "알 수 없는 운동",
+                    name: workout?.name || "알 수 없는 운동",
                     sets: [{ weight: "", reps: "", completed: false }],
                     isExpanded: true,
                 };
             });
 
             dispatch(setActiveWorkoutSession({ exercises: initialExercises, isActive: true }));
+            dispatch(setWorkoutMode('quick'));
             dispatch(setShowWorkoutSession(true));
             onDismiss();
         }

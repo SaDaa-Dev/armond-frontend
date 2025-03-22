@@ -18,29 +18,30 @@ import {
 } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "../../CreateWorkoutSchedule";
-import { useExercises } from "@/src/hooks/useWorkoutQuery";
+import { useExercises, useQuickWorkoutComplete } from "@/src/hooks/useWorkoutQuery";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WorkoutSessionFooter from "./WorkoutSessionFooter";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface WorkoutSet {
-    weight: string;
-    reps: string;
+    weight: number;
+    reps: number;
     completed: boolean;
 }
 
 interface WorkoutExercise {
     id: number;
-    title: string;
-    sets: WorkoutSet[];
+    name: string;
+    sets: WorkoutSet[]; 
     isExpanded?: boolean;
 }
 
 export default function WorkoutSession() {
     const [exercises, setExercises] = useState<WorkoutExercise[]>([]);
     const [showAddWorkout, setShowAddWorkout] = useState(false);
-    const { showWorkoutSession, checkedWorkouts, activeWorkoutSession } = useWorkout();
+    const { showWorkoutSession, checkedWorkouts, activeWorkoutSession, workoutMode } = useWorkout();
     const { data: exercisesResponse } = useExercises();
+    const quickWorkoutCompleteMutation = useQuickWorkoutComplete();
     const dispatch = useDispatch();
     const theme = useTheme();
     const insets = useSafeAreaInsets();
@@ -69,15 +70,19 @@ export default function WorkoutSession() {
 
     useEffect(() => {
         if (checkedWorkouts.length > 0 && exercisesResponse?.data) {
+            
             if (!activeWorkoutSession && showWorkoutSession) {
                 const initialExercises: WorkoutExercise[] = checkedWorkouts.map(
                     (workoutId: number) => {
                         const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
+                        
+                        // 가능한 이름 속성 검사
+                        const workoutName = workout?.name || workout?.exerciseName || workout?.title || workout?.exercise_name || "알 수 없는 운동";
     
                         return {
                             id: workoutId,
-                            title: workout?.name || "알 수 없는 운동",
-                            sets: [{ weight: "", reps: "", completed: false }],
+                            name: workoutName,
+                            sets: [{ weight: 0, reps: 0, completed: false }],
                             isExpanded: true,
                         };
                     }
@@ -85,7 +90,12 @@ export default function WorkoutSession() {
                 setExercises(initialExercises);
                 dispatch(setActiveWorkoutSession({ exercises: initialExercises, isActive: true }));
             } else if (activeWorkoutSession?.exercises) {
-                setExercises(activeWorkoutSession.exercises);
+                setExercises(activeWorkoutSession.exercises.map(exercise => ({
+                    id: exercise.id,
+                    name: exercise.name,
+                    sets: exercise.sets,
+                    isExpanded: exercise.isExpanded
+                })));
             }
         }
     }, [checkedWorkouts, exercisesResponse, activeWorkoutSession, showWorkoutSession]);
@@ -101,17 +111,41 @@ export default function WorkoutSession() {
         }).start();
     };
 
-    const handleCompleteWorkout = () => {
-        dispatch(setShowWorkoutSession(false));
-        dispatch(updateWorkoutSession(exercises));
-        dispatch(setActiveWorkoutSession(null));
-        dispatch(clearCheckedWorkouts());
-        Animated.spring(slideAnim, {
-            toValue: SCREEN_HEIGHT,
-            useNativeDriver: true,
-            tension: 45,
-            friction: 8
-        }).start();
+    const handleCompleteWorkout = async () => {
+        if (workoutMode === 'quick') {
+            try {
+                await quickWorkoutCompleteMutation.mutateAsync({
+                    workoutMode,
+                    exercises
+                });
+                // 성공적으로 저장된 후에 상태 초기화
+                dispatch(setShowWorkoutSession(false));
+                dispatch(updateWorkoutSession(exercises));
+                dispatch(setActiveWorkoutSession(null));
+                dispatch(clearCheckedWorkouts());
+                
+                Animated.spring(slideAnim, {
+                    toValue: SCREEN_HEIGHT,
+                    useNativeDriver: true,
+                    tension: 45,
+                    friction: 8
+                }).start();
+            } catch (error) {
+                console.error('Failed to complete workout:', error);
+            }
+        } else {
+            dispatch(setShowWorkoutSession(false));
+            dispatch(updateWorkoutSession(exercises));
+            dispatch(setActiveWorkoutSession(null));
+            dispatch(clearCheckedWorkouts());
+            
+            Animated.spring(slideAnim, {
+                toValue: SCREEN_HEIGHT,
+                useNativeDriver: true,
+                tension: 45,
+                friction: 8
+            }).start();
+        }
     };
 
     const handleStopWorkout = () => {
@@ -141,11 +175,14 @@ export default function WorkoutSession() {
 
         const newExercises = filteredNewWorkouts.map((workoutId) => {
             const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
+            
+            // 가능한 이름 속성 검사
+            const workoutName = workout?.name || workout?.exerciseName || workout?.title || workout?.exercise_name || "알 수 없는 운동";
 
             return {
                 id: workoutId,
-                title: workout?.name || "알 수 없는 운동",
-                sets: [{ weight: "", reps: "", completed: false }],
+                name: workoutName,
+                sets: [{ weight: 0, reps: 0, completed: false }],
                 isExpanded: true,
             };
         });
@@ -169,37 +206,45 @@ export default function WorkoutSession() {
 
     // 세트 추가
     const handleAddSet = (exerciseId: number) => {
-        setExercises((prev) =>
-            prev.map((exercise) => {
-                if (exercise.id === exerciseId) {
-                    return {
-                        ...exercise,
-                        sets: [
-                            ...exercise.sets,
-                            { weight: "", reps: "", completed: false },
-                        ],
-                    };
-                }
-                return exercise;
-            })
-        );
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id === exerciseId) {
+                return {
+                    ...exercise,
+                    sets: [
+                        ...exercise.sets,
+                        { weight: 0, reps: 0, completed: false },
+                    ],
+                };
+            }
+            return exercise;
+        });
+        
+        setExercises(updatedExercises);
+        dispatch(setActiveWorkoutSession({ 
+            exercises: updatedExercises, 
+            isActive: true 
+        }));
     };
 
     // 세트 완료 토글
     const handleToggleSet = (exerciseId: number, setIndex: number) => {
-        setExercises((prev) =>
-            prev.map((exercise) => {
-                if (exercise.id === exerciseId) {
-                    const newSets = [...exercise.sets];
-                    newSets[setIndex] = {
-                        ...newSets[setIndex],
-                        completed: !newSets[setIndex].completed,
-                    };
-                    return { ...exercise, sets: newSets };
-                }
-                return exercise;
-            })
-        );
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id === exerciseId) {
+                const newSets = [...exercise.sets];
+                newSets[setIndex] = {
+                    ...newSets[setIndex],
+                    completed: !newSets[setIndex].completed,
+                };
+                return { ...exercise, sets: newSets };
+            }
+            return exercise;
+        });
+
+        setExercises(updatedExercises);
+        dispatch(setActiveWorkoutSession({ 
+            exercises: updatedExercises, 
+            isActive: true 
+        }));
     };
 
     // 운동 데이터 업데이트
@@ -209,19 +254,26 @@ export default function WorkoutSession() {
         field: "weight" | "reps",
         value: string
     ) => {
-        setExercises((prev) =>
-            prev.map((exercise) => {
-                if (exercise.id === exerciseId) {
-                    const newSets = [...exercise.sets];
-                    newSets[setIndex] = {
-                        ...newSets[setIndex],
-                        [field]: value,
-                    };
-                    return { ...exercise, sets: newSets };
-                }
-                return exercise;
-            })
-        );
+        const numericValue = value === "" ? 0 : parseFloat(value);
+        if (isNaN(numericValue)) return;
+
+        const updatedExercises = exercises.map((exercise) => {
+            if (exercise.id === exerciseId) {
+                const newSets = [...exercise.sets];
+                newSets[setIndex] = {
+                    ...newSets[setIndex],
+                    [field]: numericValue,
+                };
+                return { ...exercise, sets: newSets };
+            }
+            return exercise;
+        });
+
+        setExercises(updatedExercises);
+        dispatch(setActiveWorkoutSession({ 
+            exercises: updatedExercises, 
+            isActive: true 
+        }));
     };
 
 
@@ -253,7 +305,8 @@ export default function WorkoutSession() {
                             {exercises.map((exercise) => (
                                 <Card key={exercise.id} style={styles.exerciseCard}>
                                     <Card.Title
-                                        title={exercise.title}
+                                        title={`${exercise.name || '이름 없음'}`}
+                                        titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
                                         right={(props) => (
                                             <IconButton
                                                 {...props}
@@ -291,7 +344,7 @@ export default function WorkoutSession() {
                                                     </Text>
                                                     <TextInput
                                                         style={styles.input}
-                                                        value={set.weight}
+                                                        value={set.weight === 0 ? "" : set.weight.toString()}
                                                         onChangeText={(value) =>
                                                             handleUpdateSet(
                                                                 exercise.id,
@@ -306,7 +359,7 @@ export default function WorkoutSession() {
                                                     />
                                                     <TextInput
                                                         style={styles.input}
-                                                        value={set.reps}
+                                                        value={set.reps === 0 ? "" : set.reps.toString()}
                                                         onChangeText={(value) =>
                                                             handleUpdateSet(
                                                                 exercise.id,
