@@ -7,25 +7,35 @@ import { List, Modal, Portal } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
 import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
+import { WorkoutMod } from "@/src/hooks/useWorkoutQuery";
 
 export default function WorkoutFooter() {
-    const [quickStartVisible, setWorkoutStartModal] = useState(false);
-    const [planningModalVisible, setShowEtcOptionModalVisible] = useState(false);
+    const [workoutStartModal, setWorkoutStartModal] = useState(false);
+    const [showEtcOptionModalVisible, setShowEtcOptionModalVisible] = useState(false);
+    const [currentMode, setCurrentMode] = useState(WorkoutMod.QUICK);
     const { activeWorkoutSession } = useWorkout();
     const dispatch = useDispatch();
 
+    // 운동 바로시작 (QUICK 모드)
+    const handleQuickStart = () => {
+        setCurrentMode(WorkoutMod.QUICK);
+        dispatch(setWorkoutMode(WorkoutMod.QUICK));
+        setWorkoutStartModal(true);
+    };
+
+    // 계획하기 버튼 클릭 시 모달 표시
     const handleEtcOptionPress = () => {
         setShowEtcOptionModalVisible(true);
     };
 
+    // 메인 버튼 클릭 (이어하기 또는 바로시작)
     const handlePress = () => {
         if (activeWorkoutSession) {
-            // 이어하기
+            // 진행 중인 운동 이어하기
             dispatch(setShowWorkoutSession(true));
-        }else{
+        } else {
             // 운동 바로시작
-            setWorkoutStartModal(true);
-            dispatch(setWorkoutMode('quick'));
+            handleQuickStart();
         }
     };
 
@@ -44,11 +54,11 @@ export default function WorkoutFooter() {
                 />
             </View>
 
-            {/* 빠른 시작 모드 */}
+            {/* 운동 선택 모달 */}
             <CreateWorkoutSchedule   
-                visible={quickStartVisible} 
+                visible={workoutStartModal} 
                 onDismiss={() => setWorkoutStartModal(false)}
-                mode="quick"
+                mode={currentMode}
             />
 
             {/* 운동 세션 모달 */}
@@ -57,17 +67,19 @@ export default function WorkoutFooter() {
             {/* 계획하기 모달 */}
             <Portal>
                 <Modal
-                    visible={planningModalVisible}
+                    visible={showEtcOptionModalVisible}
                     onDismiss={() => setShowEtcOptionModalVisible(false)}
                     contentContainerStyle={styles.modalContainer}
                 >
                     <List.Section>
-                        <List.Item
-                            title="새 루틴 만들기"
+                        <List.Item 
+                            title="루틴 만들기" 
+                            description="운동 루틴을 만들어서 저장합니다."
                             left={props => <List.Icon {...props} icon="playlist-plus" />}
                             onPress={() => {
                                 setShowEtcOptionModalVisible(false);
-                                dispatch(setWorkoutMode('planning'));
+                                setCurrentMode(WorkoutMod.PLANNING);
+                                dispatch(setWorkoutMode(WorkoutMod.PLANNING));
                                 setWorkoutStartModal(true);
                             }}
                         />
@@ -75,7 +87,6 @@ export default function WorkoutFooter() {
                             title="루틴 관리"
                             left={props => <List.Icon {...props} icon="playlist-edit" />}
                             onPress={() => {
-                                // TODO: 루틴 관리 화면으로 이동
                                 setShowEtcOptionModalVisible(false);
                             }}
                         />
@@ -83,7 +94,6 @@ export default function WorkoutFooter() {
                             title="운동 기록 보기"
                             left={props => <List.Icon {...props} icon="history" />}
                             onPress={() => {
-                                // TODO: 운동 기록 화면으로 이동
                                 setShowEtcOptionModalVisible(false);
                             }}
                         />

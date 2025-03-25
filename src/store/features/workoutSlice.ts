@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { WorkoutMod } from '@/src/hooks/useWorkoutQuery';
 
 interface WorkoutRoutine {
     id: string;
@@ -34,7 +35,7 @@ interface WorkoutState {
         }> | null;
         isActive: boolean;
     } | null;
-    workoutMode: string;
+    workoutMode: WorkoutMod;
 }
 
 const initialState: WorkoutState = {
@@ -46,7 +47,7 @@ const initialState: WorkoutState = {
     isLoading: false,
     error: null,
     activeWorkoutSession: null,
-    workoutMode: '',
+    workoutMode: WorkoutMod.QUICK,
 };
 
 export const workoutSlice = createSlice({
@@ -103,7 +104,7 @@ export const workoutSlice = createSlice({
                 state.activeWorkoutSession.exercises = action.payload;
             }
         },
-        setWorkoutMode: (state, action: PayloadAction<string>) => {
+        setWorkoutMode: (state, action: PayloadAction<WorkoutMod>) => {
             state.workoutMode = action.payload;
         },
     },

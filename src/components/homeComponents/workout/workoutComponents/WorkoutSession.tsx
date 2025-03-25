@@ -1,12 +1,13 @@
 import { useWorkout } from "@/src/hooks/useWorkout";
-import { 
-    setShowWorkoutSession, 
-    setActiveWorkoutSession, 
-    updateWorkoutSession,
-    clearCheckedWorkouts 
+import { useExercises, useQuickWorkoutComplete, WorkoutMod } from "@/src/hooks/useWorkoutQuery";
+import {
+    clearCheckedWorkouts,
+    setActiveWorkoutSession,
+    setShowWorkoutSession,
+    updateWorkoutSession
 } from "@/src/store/features/workoutSlice";
 import React, { useEffect, useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, View, Animated } from "react-native";
+import { Animated, Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import {
     Button,
     Card,
@@ -16,10 +17,9 @@ import {
     TextInput,
     useTheme
 } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "../../CreateWorkoutSchedule";
-import { useExercises, useQuickWorkoutComplete } from "@/src/hooks/useWorkoutQuery";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import WorkoutSessionFooter from "./WorkoutSessionFooter";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -112,7 +112,7 @@ export default function WorkoutSession() {
     };
 
     const handleCompleteWorkout = async () => {
-        if (workoutMode === 'quick') {
+        if (workoutMode === WorkoutMod.QUICK) {
             try {
                 await quickWorkoutCompleteMutation.mutateAsync({
                     workoutMode,
@@ -421,7 +421,7 @@ export default function WorkoutSession() {
                         <CreateWorkoutSchedule
                             visible={showAddWorkout}
                             onDismiss={() => setShowAddWorkout(false)}
-                            mode="quick"
+                            mode={WorkoutMod.QUICK}    
                             onWorkoutSelect={handleNewWorkouts}
                         />
                     </Animated.View>

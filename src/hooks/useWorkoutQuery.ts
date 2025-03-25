@@ -72,11 +72,9 @@ export function useExercises() {
 
 // 운동 완료 상태를 서버 저장 (Quick Mode)
 export const useQuickWorkoutComplete = () => {
-    console.log("useQuickWorkoutComplete 호출");
-    
     return useMutation({
         mutationKey: [QUERY_KEYS.quickWorkoutComplete],
-        mutationFn: (data: { workoutMode: string; exercises: WorkoutExercise[] }) => {
+        mutationFn: (data: { workoutMode: WorkoutMod; exercises: WorkoutExercise[] }) => {
             // 여기서 프론트엔드 형식을 백엔드 DTO 형식으로 변환
             const exerciseRecords: ExerciseRecord[] = data.exercises.map((ex, index) => {
                 return {
@@ -96,15 +94,9 @@ export const useQuickWorkoutComplete = () => {
                 };
             });
 
-            // workoutMode를 Enum 문자열로 변환
-            let workoutMod = WorkoutMod.QUICK;
-            if (data.workoutMode.toUpperCase() === "PLANNING") {
-                workoutMod = WorkoutMod.PLANNING;
-            }
-
             const dto: WorkoutCompleteDTO = {
                 exerciseRecords,
-                workoutMod,
+                workoutMod: data.workoutMode,
                 isSave: true
             };
 
