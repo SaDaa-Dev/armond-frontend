@@ -32,13 +32,19 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "packagerOpts": {
-      "sourceExts": ["js", "json", "ts", "tsx"],
+      "sourceExts": [
+        "js",
+        "json",
+        "ts",
+        "tsx"
+      ],
       "config": "metro.config.js"
     }
   }

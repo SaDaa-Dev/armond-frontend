@@ -70,14 +70,14 @@ export default function WorkoutSession() {
 
     useEffect(() => {
         if (checkedWorkouts.length > 0 && exercisesResponse?.data) {
-            
+            const exerciseData = exercisesResponse.data;
             if (!activeWorkoutSession && showWorkoutSession) {
                 const initialExercises: WorkoutExercise[] = checkedWorkouts.map(
                     (workoutId: number) => {
-                        const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
+                        const workout = exerciseData.find((w) => w.id === workoutId);
                         
                         // 가능한 이름 속성 검사
-                        const workoutName = workout?.name || workout?.exerciseName || workout?.title || workout?.exercise_name || "알 수 없는 운동";
+                        const workoutName = workout?.name ?? "알 수 없는 운동";
     
                         return {
                             id: workoutId,
@@ -164,6 +164,7 @@ export default function WorkoutSession() {
     const handleNewWorkouts = (newWorkouts: number[]) => {
         if (!exercisesResponse?.data) return;
 
+        const exerciseData = exercisesResponse.data;
         const existingIds = new Set(exercises.map((exercise) => exercise.id));
         const filteredNewWorkouts = newWorkouts.filter(
             (id) => !existingIds.has(id)
@@ -174,10 +175,10 @@ export default function WorkoutSession() {
         }
 
         const newExercises = filteredNewWorkouts.map((workoutId) => {
-            const workout = exercisesResponse.data.find((w: any) => w.id === workoutId);
+            const workout = exerciseData.find((w) => w.id === workoutId);
             
             // 가능한 이름 속성 검사
-            const workoutName = workout?.name || workout?.exerciseName || workout?.title || workout?.exercise_name || "알 수 없는 운동";
+            const workoutName = workout?.name ?? "알 수 없는 운동";
 
             return {
                 id: workoutId,

@@ -78,8 +78,8 @@ export default function WorkoutFooter() {
                             left={props => <List.Icon {...props} icon="playlist-plus" />}
                             onPress={() => {
                                 setShowEtcOptionModalVisible(false);
-                                setCurrentMode(WorkoutMod.PLANNING);
-                                dispatch(setWorkoutMode(WorkoutMod.PLANNING));
+                                setCurrentMode(WorkoutMod.ROUTINE);
+                                dispatch(setWorkoutMode(WorkoutMod.ROUTINE));
                                 setWorkoutStartModal(true);
                             }}
                         />

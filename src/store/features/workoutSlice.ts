@@ -1,26 +1,23 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { components } from '@/src/api/api-types';
 import { WorkoutMod } from '@/src/hooks/useWorkoutQuery';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface WorkoutRoutine {
     id: string;
     name: string;
+    description: string;
     workouts: number[];
 }
+type ExerciseListDto = components['schemas']['ExerciseListDto'];
 
-interface Exercise {
-    id: number;
-    name: string;
-    description: string;
-    muscleCategories: string;
-}
 
 interface WorkoutState {
     checkedWorkout: number[];
     count: number;
     routines: WorkoutRoutine[];
     showWorkoutSession: boolean;
-    exercises: Exercise[];
-    isLoading: boolean;
+    exercises: ExerciseListDto[];
+    isLoading: boolean; 
     error: string | null;
     activeWorkoutSession: {
         exercises: Array<{
@@ -66,14 +63,14 @@ export const workoutSlice = createSlice({
         clearCheckedWorkouts: (state) => {
             state.checkedWorkout = [];
         },
-        saveWorkoutRoutine: (state, action: PayloadAction<{ name: string }>) => {
+        saveWorkoutRoutine: (state, action: PayloadAction<{ name: string; description: string; id?: string }>) => {
             const newRoutine: WorkoutRoutine = {
-                id: Date.now().toString(),
+                id: action.payload.id || Date.now().toString(),
                 name: action.payload.name,
+                description: action.payload.description,
                 workouts: [...state.checkedWorkout],
             };
             state.routines.push(newRoutine);
-            state.checkedWorkout = []; // 저장 후 선택된 운동 초기화
         },
         deleteWorkoutRoutine: (state, action: PayloadAction<string>) => {
             state.routines = state.routines.filter(routine => routine.id !== action.payload);
@@ -87,9 +84,9 @@ export const workoutSlice = createSlice({
         incrementByAmount: (state, action: PayloadAction<number>) => {
             state.count += action.payload;
         },
-        setExercises: (state, action: PayloadAction<Exercise[]>) => {
+        setExercises: (state, action: PayloadAction<ExerciseListDto[]>) => {
             state.exercises = action.payload;
-        },
+        },  
         setLoading: (state, action: PayloadAction<boolean>) => {
             state.isLoading = action.payload;
         },

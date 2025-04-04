@@ -1,11 +1,10 @@
 import WorkoutFooter from "@/src/components/homeComponents/WorkoutFooter";
-import WorkoutList from "@/src/components/homeComponents/WorkoutList";
+import RoutineList from "@/src/components/homeComponents/WorkoutList";
 import { useExercises } from "@/src/hooks/useWorkoutQuery";
-import { useWorkout } from "@/src/hooks/useWorkout";
-import { setExercises, setShowWorkoutSession } from "@/src/store/features/workoutSlice";
+import { setExercises } from "@/src/store/features/workoutSlice";
 import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { useTheme, Button } from "react-native-paper";
+import { useTheme } from "react-native-paper";
 import { useDispatch } from "react-redux";
 
 export default function HomeScreen() {
@@ -27,7 +26,7 @@ export default function HomeScreen() {
             ]}
         >
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <WorkoutList />
+                <RoutineList />
             </ScrollView>
             
             {/* Footer */}

@@ -1,9 +1,10 @@
 import { useWorkout } from "@/src/hooks/useWorkout";
-import { useExercises, WorkoutMod } from "@/src/hooks/useWorkoutQuery";
+import { useExercises, WorkoutMod, useSaveRoutine } from "@/src/hooks/useWorkoutQuery";
 import {
     saveWorkoutRoutine,
     setShowWorkoutSession,
-    setWorkoutMode
+    setWorkoutMode,
+    clearCheckedWorkouts
 } from "@/src/store/features/workoutSlice";
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
@@ -56,11 +57,13 @@ export default function CreateWorkoutSchedule({
         "chest", "back", "shoulder", "biceps", "triceps", "abs", "legs", "fullbody",
     ]);
     const [routineName, setRoutineName] = useState("");
+    const [routineDescription, setRoutineDescription] = useState("");
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const insets = useSafeAreaInsets();
     const { checkedWorkouts, isWorkoutSelected } = useWorkout();
     const dispatch = useDispatch();
     const { data: exercisesResponse } = useExercises();
+    const saveRoutineMutation = useSaveRoutine();
 
     const rBottomSheetStyle = useAnimatedStyle(() => {
         return {
@@ -107,8 +110,8 @@ export default function CreateWorkoutSchedule({
             return;
         }
 
-        if (mode === WorkoutMod.PLANNING) { 
-            // Planning Mode - 루틴 저장 다이얼로그 표시
+        if (mode === WorkoutMod.ROUTINE) { 
+            // Routine Mode - 루틴 저장 다이얼로그 표시
             setShowSaveDialog(true);
         } else { 
             // Quick Mode - 운동 세션 시작
@@ -120,7 +123,7 @@ export default function CreateWorkoutSchedule({
         }
     };
 
-    const handleSaveRoutine = () => {
+    const handleSaveRoutine = async () => {
         if (!routineName.trim()) {
             Toast.show({
                 type: "error",
@@ -129,14 +132,40 @@ export default function CreateWorkoutSchedule({
             return;
         }
 
-        dispatch(saveWorkoutRoutine({ name: routineName.trim() }));
-        setRoutineName("");
-        setShowSaveDialog(false);
-        Toast.show({
-            type: "success",
-            text1: "루틴이 저장되었습니다.",
-        });
-        onDismiss();
+        try {
+            // 백엔드 API로 루틴 저장
+            const response = await saveRoutineMutation.mutateAsync({
+                name: routineName.trim(),
+                description: routineDescription.trim(),
+                exerciseIds: [...checkedWorkouts]
+            });
+
+            // 백엔드에서 반환된 ID와 함께 Redux 상태 업데이트
+            dispatch(saveWorkoutRoutine({ 
+                name: routineName.trim(),
+                description: routineDescription.trim(),
+                id: Date.now().toString() // 임시 ID 생성
+            }));
+            dispatch(clearCheckedWorkouts());
+            
+            // 상태 초기화
+            setRoutineName("");
+            setRoutineDescription("");
+            setShowSaveDialog(false);
+            
+            Toast.show({
+                type: "success",
+                text1: "루틴이 저장되었습니다.",
+            });
+            onDismiss();
+        } catch (error) {
+            console.error('Failed to save routine:', error);
+            Toast.show({
+                type: "error",
+                text1: "루틴 저장 실패",
+                text2: "다시 시도해주세요.",
+            });
+        }
     };
 
     return (
@@ -196,6 +225,15 @@ export default function CreateWorkoutSchedule({
                                 onChangeText={setRoutineName}
                                 style={styles.input}
                                 mode="outlined"
+                            />
+                            <TextInput
+                                label="루틴 설명"
+                                value={routineDescription}
+                                onChangeText={setRoutineDescription}
+                                style={styles.input}
+                                mode="outlined"
+                                multiline
+                                numberOfLines={3}
                             />
                             <View style={styles.dialogButtons}>
                                 <Button

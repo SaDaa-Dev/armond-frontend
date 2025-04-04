@@ -10,12 +10,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useReactQueryDevTools } from '@dev-plugins/react-query';
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { MD3DarkTheme, PaperProvider } from "react-native-paper";
+import { ActivityIndicator, MD3DarkTheme, PaperProvider, Text } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
+import { authApi } from "@/src/api/auth/authApi";
+import { View } from "react-native";
+import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -51,8 +54,71 @@ const darkTheme = {
 };
 
 export default function RootLayout() {
-    const isAuthenticated = true;
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [serverError, setServerError] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    useEffect(() => {
+    
+        // 앱 시작시 서버 연결 확인 후 인증 상태 확인 
+        const initializeApp = async () => {
+            try {
+                const isConnected = await authApi.checkHealth();
+
+                if (!isConnected) {
+                    setServerError(true);
+                    setIsAuthenticated(false);
+                    return;
+                }
+
+                const accessToken = await authApi.getAccessToken();
+                setIsAuthenticated(!!accessToken);  
+                setIsLoading(false);
+            } catch (error) {
+                setIsAuthenticated(false);
+                setIsLoading(false);
+            }
+        };
+
+        const timer = setTimeout(() => {
+            initializeApp();
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, []);
+    
     useReactQueryDevTools(queryClient);
+    
+    // 인증 상태 로딩 중일 때 로딩 표시
+    if (isAuthenticated === null) {
+        return (
+            <SafeAreaProvider>
+                <StatusBar style="light" backgroundColor="#1E1E1E" translucent={false} />
+                <View style={{ 
+                    flex: 1, 
+                    backgroundColor: "#1E1E1E", 
+                    justifyContent: 'center', 
+                    alignItems: 'center' 
+                }}>
+                    <Text style={{ 
+                        fontSize: 42, 
+                        fontWeight: 'bold', 
+                        color: '#9C27B0', 
+                        marginBottom: 20 
+                    }}>
+                        아몬드
+                    </Text>
+                    <Text style={{ 
+                        fontSize: 16, 
+                        color: 'rgba(255, 255, 255, 0.7)', 
+                        marginBottom: 30 
+                    }}>
+                        운동 기록을 더 쉽게
+                    </Text>
+                    <ActivityIndicator size="large" color="#9C27B0" />
+                </View>
+            </SafeAreaProvider>
+        );
+    }
     
     return (
         <Provider store={store}>
@@ -79,6 +145,7 @@ export default function RootLayout() {
                                 )}
                             </Stack>
                         </PaperProvider>
+                        <ServerErrorModal serverError={serverError} />
                     </SafeAreaProvider>
                 </GestureHandlerRootView>
             </QueryClientProvider>

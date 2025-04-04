@@ -1,6 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { quickWorkoutCompleteApi, workoutApi } from '../api/workoutApi';
+import { workoutApi } from '../api/workoutApi';
+import { components } from '../api/api-types';
 
+type ExerciseListDto = components['schemas']['ExerciseListDto'];
+type QuickWorkoutCompleteDto = components['schemas']['QuickWorkoutCompleteDto'];
+type ApiResponseListExerciseListDto = components['schemas']['ApiResponseListExerciseListDto'];
+type ApiResponseString = components['schemas']['ApiResponseString'];
+type SaveRoutineDto = components['schemas']['SaveRoutineDto'];
 
 export interface WorkoutSet {
     weight: number;
@@ -52,7 +58,7 @@ export interface WorkoutCompleteDTO {
 
 export enum WorkoutMod {
     QUICK = "QUICK",
-    PLANNING = "PLANNING"
+    ROUTINE = "ROUTINE"
 }
 
 export const QUERY_KEYS = {
@@ -60,11 +66,12 @@ export const QUERY_KEYS = {
     exercisesByCategory: 'exercisesByCategory',
     workoutRecords: 'workoutRecords',
     quickWorkoutComplete: 'quickWorkoutComplete',
+    saveRoutine: 'saveRoutine',
 } as const;
 
 // 운동 목록 조회
 export function useExercises() {
-    return useQuery({
+    return useQuery<ApiResponseListExerciseListDto>({
         queryKey: [QUERY_KEYS.exercisePresets],
         queryFn: workoutApi.getExercisePresets,
     });
@@ -72,35 +79,48 @@ export function useExercises() {
 
 // 운동 완료 상태를 서버 저장 (Quick Mode)
 export const useQuickWorkoutComplete = () => {
-    return useMutation({
+    return useMutation<ApiResponseString, Error, { workoutMode: WorkoutMod; exercises: WorkoutExercise[] }>({
         mutationKey: [QUERY_KEYS.quickWorkoutComplete],
-        mutationFn: (data: { workoutMode: WorkoutMod; exercises: WorkoutExercise[] }) => {
-            // 여기서 프론트엔드 형식을 백엔드 DTO 형식으로 변환
-            const exerciseRecords: ExerciseRecord[] = data.exercises.map((ex, index) => {
-                return {
-                    exercise: {
-                        id: ex.id,
-                        name: ex.name,
-                        description: "",
-                        orderIdx: index,
-                        muscleCategories: []
-                    },
-                    sets: ex.sets.map((set, setIndex) => ({
-                        setNumber: setIndex + 1,
-                        weight: set.weight,
-                        reps: set.reps,
-                        restTimeInSeconds: 60 // 기본값
-                    }))
-                };
-            });
+        mutationFn: (data) => {
+            const exerciseRecords: QuickWorkoutCompleteDto['exerciseRecords'] = data.exercises.map((ex, index) => ({
+                exercise: {
+                    id: ex.id,
+                    name: ex.name,
+                    description: "",
+                    orderIdx: index,
+                    muscleCategories: []
+                },
+                sets: ex.sets.map((set, setIndex) => ({
+                    setNumber: setIndex + 1,
+                    weight: set.weight,
+                    reps: set.reps,
+                    restTimeInSeconds: 60 // 기본값
+                }))
+            }));
 
-            const dto: WorkoutCompleteDTO = {
+            const dto: QuickWorkoutCompleteDto = {
                 exerciseRecords,
                 workoutMod: data.workoutMode,
                 isSave: true
             };
 
-            return quickWorkoutCompleteApi.quickWorkoutComplete(dto);
+            return workoutApi.quickWorkoutComplete(dto);
+        },
+    });
+};
+
+// 루틴 저장 API 호출
+export const useSaveRoutine = () => {
+    return useMutation<ApiResponseString, Error, SaveRoutineDto>({
+        mutationKey: [QUERY_KEYS.saveRoutine],
+        mutationFn: (data) => {
+            const routineDto = {
+                name: data.name,
+                description: data.description,
+                exerciseIds: data.exerciseIds,
+            };
+            
+            return workoutApi.saveRoutine(routineDto);
         },
     });
 };
