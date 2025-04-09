@@ -1,5 +1,6 @@
 import { BASE_URL } from "../constants/ApiConst";
 import { components, operations } from './api-types';
+import { createApiClient } from "./axiosService";
 
 type ExerciseListDto = components['schemas']['ExerciseListDto'];
 type QuickWorkoutCompleteDto = components['schemas']['QuickWorkoutCompleteDto'];
@@ -7,40 +8,44 @@ type ApiResponseListExerciseListDto = components['schemas']['ApiResponseListExer
 type ApiResponseString = components['schemas']['ApiResponseString'];
 type SaveRoutineDto = components['schemas']['SaveRoutineDto'];
 
+const api = createApiClient();
+
 export const workoutApi = {
     getExercisePresets: async (): Promise<ApiResponseListExerciseListDto> => {
-        const response = await fetch(BASE_URL + '/exercises');
-        return response.json();
+        try {
+            const response = await api.requestWithMethod(
+                "GET",
+                "/exercises"
+            );
+            return response.data;
+        } catch (error) {
+            throw new Error('운동 프리셋을 가져오는데 실패했습니다');
+        }
     },
     
     saveRoutine: async (routineDto: SaveRoutineDto): Promise<ApiResponseString> => {
-        const response = await fetch(`${BASE_URL}/routines`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(routineDto),
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to save routine');
+        try {
+            const response = await api.requestWithMethod(
+                "POST",
+                "/routines",
+                routineDto
+            );
+            return response.data;
+        } catch (error) {
+            throw new Error('루틴 저장에 실패했습니다');
         }
-        
-        return response.json();
     },
+    
     quickWorkoutComplete: async (dto: QuickWorkoutCompleteDto): Promise<ApiResponseString> => {
-        const response = await fetch(`${BASE_URL}/workouts/complete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(dto),
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to complete workout');
+        try {
+            const response = await api.requestWithMethod(
+                "POST",
+                "/workouts/complete",
+                dto
+            );
+            return response.data;
+        } catch (error) {
+            throw new Error('운동 완료 처리에 실패했습니다');
         }
-        
-        return response.json();
     },
 };

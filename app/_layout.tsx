@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useReactQueryDevTools } from '@dev-plugins/react-query';
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ActivityIndicator, MD3DarkTheme, PaperProvider, Text } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -19,6 +19,8 @@ import { Provider } from "react-redux";
 import { authApi } from "@/src/api/auth/authApi";
 import { View } from "react-native";
 import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
+import { setNavigationRef } from "@/src/api/axiosService";
+import { useNavigation } from "expo-router";
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -57,6 +59,15 @@ export default function RootLayout() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [serverError, setServerError] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const navigation = useNavigation();
+    
+    // 네비게이션 레퍼런스 설정
+    useEffect(() => {
+        if (navigation) {
+            setNavigationRef(navigation);
+        }
+    }, [navigation]);
+    
     useEffect(() => {
     
         // 앱 시작시 서버 연결 확인 후 인증 상태 확인 
