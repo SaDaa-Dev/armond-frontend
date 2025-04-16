@@ -5,22 +5,29 @@ declare global {
     }
 }
 
+import { authApi } from "@/src/api/auth/authApi";
+import { setNavigationRef } from "@/src/api/axiosService";
+import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
 import { store } from "@/src/store/configureStore";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useReactQueryDevTools } from '@dev-plugins/react-query';
-import { Stack } from "expo-router";
+import { router, Stack, useNavigation, Slot } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import { Alert, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { ActivityIndicator, MD3DarkTheme, PaperProvider, Text } from "react-native-paper";
+import {
+    ActivityIndicator,
+    MD3DarkTheme,
+    PaperProvider
+} from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
-import { authApi } from "@/src/api/auth/authApi";
-import { View } from "react-native";
-import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
-import { setNavigationRef } from "@/src/api/axiosService";
-import { useNavigation } from "expo-router";
+
+// 토큰 키
+const ACCESS_TOKEN_KEY = "access_token";
+const REFRESH_TOKEN_KEY = "refresh_token";
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -56,105 +63,81 @@ const darkTheme = {
 };
 
 export default function RootLayout() {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [serverError, setServerError] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [initialRoute, setInitialRoute] = useState<"/(auth)/login" | "/(tabs)" | null>(null);
     const navigation = useNavigation();
-    
-    // 네비게이션 레퍼런스 설정
+
     useEffect(() => {
         if (navigation) {
             setNavigationRef(navigation);
         }
     }, [navigation]);
-    
+
+    // 초기 라우팅을 처리하는 useEffect
     useEffect(() => {
-    
-        // 앱 시작시 서버 연결 확인 후 인증 상태 확인 
-        const initializeApp = async () => {
-            try {
-                const isConnected = await authApi.checkHealth();
+        if (!isLoading && initialRoute) {
+            console.log("라우팅 시도:", initialRoute);
+            setTimeout(() => {
+                router.replace(initialRoute);
+            }, 300); // 타이머 시간 증가
+        }
+    }, [isLoading, initialRoute]);
 
-                if (!isConnected) {
-                    setServerError(true);
-                    setIsAuthenticated(false);
-                    return;
-                }
+    const checkAuthentication = async () => {
+        try {
+            const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+            return !!token;
+        } catch {
+            return false;
+        }
+    };
 
-                const accessToken = await authApi.getAccessToken();
-                setIsAuthenticated(!!accessToken);  
+    const initializeApp = async () => {
+        try {
+            const isConnected = await authApi.checkHealth();
+            if (!isConnected) {
+                Alert.alert("서버 연결 실패", "서버 연결에 실패했습니다.");
+                setServerError(true);
+                setInitialRoute("/(auth)/login");
                 setIsLoading(false);
-            } catch (error) {
-                setIsAuthenticated(false);
-                setIsLoading(false);
+                return;
             }
-        };
 
+            const isAuthenticated = await checkAuthentication();
+            
+            setInitialRoute(isAuthenticated ? "/(tabs)" : "/(auth)/login");
+            setIsLoading(false);
+        } catch (error) {
+            console.error("초기화 오류:", error);
+            setInitialRoute("/(auth)/login");
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        console.log("앱 초기화 시작");
         const timer = setTimeout(() => {
             initializeApp();
-        }, 2000);
+        }, 1500); // 타이머 시간 증가
 
         return () => clearTimeout(timer);
     }, []);
-    
-    useReactQueryDevTools(queryClient);
-    
-    // 인증 상태 로딩 중일 때 로딩 표시
-    if (isAuthenticated === null) {
-        return (
-            <SafeAreaProvider>
-                <StatusBar style="light" backgroundColor="#1E1E1E" translucent={false} />
-                <View style={{ 
-                    flex: 1, 
-                    backgroundColor: "#1E1E1E", 
-                    justifyContent: 'center', 
-                    alignItems: 'center' 
-                }}>
-                    <Text style={{ 
-                        fontSize: 42, 
-                        fontWeight: 'bold', 
-                        color: '#9C27B0', 
-                        marginBottom: 20 
-                    }}>
-                        아몬드
-                    </Text>
-                    <Text style={{ 
-                        fontSize: 16, 
-                        color: 'rgba(255, 255, 255, 0.7)', 
-                        marginBottom: 30 
-                    }}>
-                        운동 기록을 더 쉽게
-                    </Text>
-                    <ActivityIndicator size="large" color="#9C27B0" />
-                </View>
-            </SafeAreaProvider>
-        );
-    }
-    
+
     return (
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
                 <GestureHandlerRootView style={{ flex: 1 }}>
                     <SafeAreaProvider>
-                        <StatusBar
-                            style="light"
-                            backgroundColor="#1E1E1E"
-                            translucent={false}
-                        />
+                        <StatusBar style="light" backgroundColor="#1E1E1E" translucent={false} />
                         <PaperProvider theme={darkTheme}>
-                            <Stack screenOptions={{ headerShown: false }}>
-                                {isAuthenticated ? (
-                                    <Stack.Screen
-                                        name="(tabs)"
-                                        options={{ headerShown: false }}
-                                    />
-                                ) : (
-                                    <Stack.Screen
-                                        name="(auth)/login"
-                                        options={{ headerShown: false }}
-                                    />
-                                )}
-                            </Stack>
+                            {isLoading ? (
+                                <View style={{ flex: 1, backgroundColor: "#1E1E1E", justifyContent: "center", alignItems: "center" }}>
+                                    <ActivityIndicator size="large" color="#9C27B0" />
+                                </View>
+                            ) : (
+                                <Slot />
+                            )}
                         </PaperProvider>
                         <ServerErrorModal serverError={serverError} />
                     </SafeAreaProvider>

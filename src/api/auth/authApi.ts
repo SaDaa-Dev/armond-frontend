@@ -3,6 +3,7 @@ import { components } from "../api-types";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { createApiClient } from "../axiosService";
+import { router } from "expo-router";
 
 // 토큰 스토리지 키 상수
 const ACCESS_TOKEN_KEY = "access_token";
@@ -38,11 +39,13 @@ export const authApi = {
 
     login: async (loginDto: LoginDto): Promise<ApiResponseTokenResponse> => {
         try {
+            console.log("LoginDto", loginDto);
             const response = await api.requestWithMethod(
                 "POST",
                 "/auth/login",
                 loginDto
             );
+            console.log("login response", response.data);
             return response.data;
         } catch (error) {
             throw new Error("로그인에 실패했습니다");
@@ -51,9 +54,11 @@ export const authApi = {
 
     logout: async (): Promise<ApiResponseString> => {
         try {
+            console.log("로그아웃 시도");
             const accessToken = await SecureStore.getItemAsync(
                 ACCESS_TOKEN_KEY
             );
+            console.log("accessToken", accessToken);
             const response = await api.requestWithMethod(
                 "POST",
                 "/auth/logout",
@@ -71,6 +76,7 @@ export const authApi = {
 
             return response.data;
         } catch (error) {
+            router.replace("/(auth)/login");
             throw new Error("로그아웃에 실패했습니다");
         }
     },

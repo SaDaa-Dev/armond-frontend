@@ -5,12 +5,37 @@ import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { authApi } from "../../src/api/auth/authApi";
 
+interface LoginDto {
+    phoneNumber: string;
+    password: string;
+}
+
 export default function Login() {
     const theme = useTheme();
     const [phoneNumber, setPhoneNumber] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // 전화번호 형식 자동 변환 (000-0000-0000)
+    const formatPhoneNumber = (text: string) => {
+        // 숫자만 남기고 모든 문자 제거
+        const cleaned = text.replace(/\D/g, "");
+        let formatted = cleaned;
+        
+        // 입력된 번호가 '010'으로 시작하지 않으면, '0'으로 시작하는지 확인하고 아니면 '0'을 추가
+        const ensureStartsWithZero = cleaned.startsWith("0") ? cleaned : "0" + cleaned;
+        
+        if (ensureStartsWithZero.length > 3 && ensureStartsWithZero.length <= 7) {
+            formatted = `${ensureStartsWithZero.slice(0, 3)}-${ensureStartsWithZero.slice(3)}`;
+        } else if (ensureStartsWithZero.length > 7) {
+            formatted = `${ensureStartsWithZero.slice(0, 3)}-${ensureStartsWithZero.slice(3, 7)}-${ensureStartsWithZero.slice(7, 11)}`;
+        } else {
+            formatted = ensureStartsWithZero;
+        }
+        
+        return formatted;
+    };
 
     const handleLogin = async () => {
         setError("");
@@ -20,13 +45,24 @@ export default function Login() {
             // 간단한 검증
             if (!phoneNumber || !password) {
                 setError("전화번호와 비밀번호를 입력해주세요.");
+                setIsLoading(false);
                 return;
             }
 
+            // 휴대폰 번호에서 하이픈(-) 제거하고 앞에 0이 있는지 확인
+            let cleanedPhoneNumber = phoneNumber.replace(/-/g, "");
+            
+            // 전화번호가 0으로 시작하는지 확인, 아니면 0 추가
+            if (!cleanedPhoneNumber.startsWith("0")) {
+                cleanedPhoneNumber = "0" + cleanedPhoneNumber;
+            }
+
+            console.log("로그인 요청 전화번호:", cleanedPhoneNumber);
+
             const response = await authApi.login({
-                phoneNumber,
+                phoneNumber: cleanedPhoneNumber,
                 password,
-            });
+            } as LoginDto);
 
             if (response.data) {
                 // 토큰 저장
@@ -34,7 +70,7 @@ export default function Login() {
                     response.data.accessToken || "",
                     response.data.refreshToken || ""
                 );
-                
+
                 // 메인 화면으로 리다이렉트
                 router.replace("/(tabs)");
             } else {
@@ -68,7 +104,7 @@ export default function Login() {
                     <TextInput
                         label="전화번호"
                         value={phoneNumber}
-                        onChangeText={setPhoneNumber}
+                        onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
                         style={styles.input}
                         mode="outlined"
                         keyboardType="phone-pad"
@@ -163,4 +199,4 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 16,
     },
-});   
+});

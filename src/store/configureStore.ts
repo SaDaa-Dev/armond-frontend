@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import workoutSlice from "./features/workoutSlice";
-import devToolsEnhancer from 'redux-devtools-expo-dev-plugin';
+import devToolsEnhancer from "redux-devtools-expo-dev-plugin";
 
 export const store = configureStore({
     reducer: {
@@ -11,8 +11,9 @@ export const store = configureStore({
             serializableCheck: false,
             immutableCheck: false,
         }),
-    devTools: __DEV__,
-    enhancers: getDefaultEnhancers => getDefaultEnhancers().concat(devToolsEnhancer({ trace: true })),
+    devTools: false,
+    enhancers: (getDefaultEnhancers) =>
+        getDefaultEnhancers().concat(devToolsEnhancer()),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
