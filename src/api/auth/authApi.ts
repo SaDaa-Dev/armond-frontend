@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { createApiClient } from "../axiosService";
 import { router } from "expo-router";
+import { Alert, BackHandler } from "react-native";
 
 // 토큰 스토리지 키 상수
 const ACCESS_TOKEN_KEY = "access_token";
@@ -27,11 +28,12 @@ export const authApi = {
             );
             return response.data;
         } catch (error) {
-            console.log(`서버 연결 실패, ${BASE_URL}/actuator/health`, error);
             if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
                 console.log("서버 연결 시간 초과");
             } else if (axios.isAxiosError(error) && !error.response) {
                 console.log("서버에 연결할 수 없습니다");
+                Alert.alert("서버 연결 실패", "서버 연결에 실패했습니다.");
+                BackHandler.exitApp();
             }
             return false;
         }

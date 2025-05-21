@@ -21,6 +21,7 @@ export default function ServerErrorModal({ serverError }: ServerErrorModalProps)
                         } else {
                             router.replace("/(auth)/login");
                         }
+                        BackHandler.exitApp();
                     }
                 }
             ]

@@ -97,7 +97,6 @@ export default function RootLayout() {
         try {
             const isConnected = await authApi.checkHealth();
             if (!isConnected) {
-                Alert.alert("서버 연결 실패", "서버 연결에 실패했습니다.");
                 setServerError(true);
                 setInitialRoute("/(auth)/login");
                 setIsLoading(false);
