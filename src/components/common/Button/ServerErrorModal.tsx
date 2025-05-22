@@ -15,14 +15,6 @@ export default function ServerErrorModal({ serverError }: ServerErrorModalProps)
             [
                 {
                     text: "확인",
-                    onPress: () => {
-                        if (Platform.OS === "android") {
-                            BackHandler.exitApp();
-                        } else {
-                            router.replace("/(auth)/login");
-                        }
-                        BackHandler.exitApp();
-                    }
                 }
             ]
         );

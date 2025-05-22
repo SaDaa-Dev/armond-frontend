@@ -5,29 +5,24 @@ declare global {
     }
 }
 
-import { authApi } from "@/src/api/auth/authApi";
 import { setNavigationRef } from "@/src/api/axiosService";
 import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
+import { 
+    initializeApp, 
+    type InitialRoute,
+    resetServerErrorAlert
+} from "@/src/services/appInitializationService";
 import { store } from "@/src/store/configureStore";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { router, Stack, useNavigation, Slot } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import { router, useNavigation, Slot } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
-import { Alert, View } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import {
-    ActivityIndicator,
-    MD3DarkTheme,
-    PaperProvider
-} from "react-native-paper";
+import { MD3DarkTheme, PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
-
-// 토큰 키
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -40,6 +35,14 @@ if (__DEV__) {
     // @ts-ignore
     window.__REACT_DEVTOOLS_PORT__ = 19000;
 }
+
+SplashScreen.preventAutoHideAsync();
+
+SplashScreen.setOptions({
+    duration: 1000,
+    fade: true,
+});
+
 const queryClient = new QueryClient();
 
 const darkTheme = {
@@ -64,8 +67,9 @@ const darkTheme = {
 
 export default function RootLayout() {
     const [serverError, setServerError] = useState<boolean>(false);
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [initialRoute, setInitialRoute] = useState<"/(auth)/login" | "/(tabs)" | null>(null);
+    const [isAppReady, setIsAppReady] = useState<boolean>(false);
+    const [initialRoute, setInitialRoute] = useState<InitialRoute | null>(null);
+    const [hasInitialized, setHasInitialized] = useState<boolean>(false);
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -74,69 +78,73 @@ export default function RootLayout() {
         }
     }, [navigation]);
 
-    // 초기 라우팅을 처리하는 useEffect
-    useEffect(() => {
-        if (!isLoading && initialRoute) {
-            console.log("라우팅 시도:", initialRoute);
-            setTimeout(() => {
-                router.replace(initialRoute);
-            }, 300); // 타이머 시간 증가
+    // 앱 초기화 실행
+    const handleAppInitialization = async () => {
+        // 중복 초기화 방지
+        if (hasInitialized) {
+            return;
         }
-    }, [isLoading, initialRoute]);
-
-    const checkAuthentication = async () => {
+        
         try {
-            const token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-            return !!token;
-        } catch {
-            return false;
-        }
-    };
-
-    const initializeApp = async () => {
-        try {
-            const isConnected = await authApi.checkHealth();
-            if (!isConnected) {
-                setServerError(true);
-                setInitialRoute("/(auth)/login");
-                setIsLoading(false);
-                return;
-            }
-
-            const isAuthenticated = await checkAuthentication();
+            setHasInitialized(true);
             
-            setInitialRoute(isAuthenticated ? "/(tabs)" : "/(auth)/login");
-            setIsLoading(false);
+            // 서버 에러 알림 플래그 리셋
+            resetServerErrorAlert();
+            
+            console.log("🚀 앱 초기화 시작");
+            const result = await initializeApp();
+            
+            console.log("초기화 결과:", result);
+            
+            setServerError(result.hasServerError);
+            setInitialRoute(result.initialRoute);
+            
+            if (!result.isSuccess && result.errorMessage) {
+                console.warn("⚠️ 초기화 경고:", result.errorMessage);
+            }
         } catch (error) {
-            console.error("초기화 오류:", error);
+            console.error("💥 초기화 처리 오류:", error);
             setInitialRoute("/(auth)/login");
-            setIsLoading(false);
+        } finally {
+            setIsAppReady(true);
         }
     };
 
-    useEffect(() => {
-        console.log("앱 초기화 시작");
-        const timer = setTimeout(() => {
-            initializeApp();
-        }, 1500); // 타이머 시간 증가
+    // 앱이 준비되면 splash screen 숨기기
+    const onLayoutRootView = useCallback(async () => {
+        if (isAppReady && initialRoute) {
+            console.log("✅ 앱 준비 완료 - Splash screen 숨기기");
+            await SplashScreen.hideAsync();
+            
+            // 서버 에러가 있으면 라우팅하지 않음 (모달만 표시)
+            if (!serverError) {
+                setTimeout(() => {
+                    console.log("🔄 라우팅 수행:", initialRoute);
+                    router.replace(initialRoute);
+                }, 100);
+            } else {
+                console.log("🚫 서버 에러로 인해 라우팅 건너뜀");
+            }
+        }
+    }, [isAppReady, initialRoute, serverError]);
 
-        return () => clearTimeout(timer);
+    useEffect(() => {
+        handleAppInitialization();
     }, []);
+
+    // 앱이 아직 준비되지 않았으면 아무것도 렌더링하지 않음 (splash screen이 계속 보임)
+    if (!isAppReady || !initialRoute) {
+        return null;
+    }
 
     return (
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
-                <GestureHandlerRootView style={{ flex: 1 }}>
+                <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
                     <SafeAreaProvider>
                         <StatusBar style="light" backgroundColor="#1E1E1E" translucent={false} />
                         <PaperProvider theme={darkTheme}>
-                            {isLoading ? (
-                                <View style={{ flex: 1, backgroundColor: "#1E1E1E", justifyContent: "center", alignItems: "center" }}>
-                                    <ActivityIndicator size="large" color="#9C27B0" />
-                                </View>
-                            ) : (
-                                <Slot />
-                            )}
+                            <Slot />
                         </PaperProvider>
                         <ServerErrorModal serverError={serverError} />
                     </SafeAreaProvider>

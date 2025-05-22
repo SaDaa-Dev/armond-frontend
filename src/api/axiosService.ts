@@ -4,6 +4,7 @@ import { AxiosInstance } from "axios";
 import { BASE_URL } from "../constants/ApiConst";
 import { Alert } from "react-native";
 import { CommonActions } from "@react-navigation/native";
+import * as SecureStore from "expo-secure-store";
 
 // 전역 네비게이션 참조를 위한 변수
 let navigationRef: any = null;
@@ -44,8 +45,12 @@ export const createApiClient = (): AxiosInstance & {
 
     // 요청 인터셉터 설정
     instance.interceptors.request.use(
-        (config) => {
-            // 요청 전에 처리
+        async (config) => {
+            const accessToken = await SecureStore.getItemAsync("access_token");
+            if (accessToken) {
+                config.headers.Authorization = `Bearer ${accessToken}`;
+            }
+            
             return config;
         },
         (error) => {
