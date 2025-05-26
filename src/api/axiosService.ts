@@ -65,22 +65,49 @@ export const createApiClient = (): AxiosInstance & {
             return response;
         },
         (error) => {
-            // 서버 다운 또는 네트워크 에러 처리
-            if (!error.response || error.code === "ECONNABORTED") {
-                // 서버가 응답하지 않는 경우 (다운 또는 타임아웃)
-                Alert.alert(
-                    "서버 연결 오류",
-                    "서버에 연결할 수 없습니다. 로그인 화면으로 이동합니다.",
-                    [
-                        {
-                            text: "확인",
-                            onPress: () => {
-                                navigateToInitialScreen();
-                            },
-                        },
-                    ]
-                );
+            if (!axios.isAxiosError(error)) {
+                return Promise.reject(error);
             }
+
+            const alertConfig = {
+                confirmText: "확인",
+                onConfirm: () => navigateToInitialScreen()
+            };
+
+            // 에러 타입별 알림 설정
+            const errorAlerts = {
+                networkError: {
+                    title: "네트워크 오류",
+                    message: "인터넷 연결을 확인해주세요.",
+                    shouldShow: !error.response
+                },
+                timeoutError: {
+                    title: "연결 시간 초과", 
+                    message: "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.",
+                    shouldShow: error.code === "ECONNABORTED"
+                },
+                serverError: {
+                    title: "서버 오류",
+                    message: "서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+                    shouldShow: error.response?.status && error.response?.status >= 500
+                },
+                authError: {
+                    title: "인증 오류",
+                    message: "로그인이 필요한 서비스입니다.",
+                    shouldShow: error.response?.status && [401, 403].includes(error.response?.status)
+                }
+            };
+
+            // 해당하는 에러 찾아서 알림 표시
+            Object.values(errorAlerts).forEach(({ title, message, shouldShow }) => {
+                if (shouldShow) {
+                    Alert.alert(title, message, [{
+                        text: alertConfig.confirmText,
+                        onPress: alertConfig.onConfirm
+                    }]);
+                }
+            });
+
             return Promise.reject(error);
         }
     );
