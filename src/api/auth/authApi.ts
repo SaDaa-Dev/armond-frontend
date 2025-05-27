@@ -28,13 +28,8 @@ export const authApi = {
             );
             return response.data;
         } catch (error) {
-            if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
-                console.log("서버 연결 시간 초과");
-            } else if (axios.isAxiosError(error) && !error.response) {
-                console.log("서버에 연결할 수 없습니다");
-                Alert.alert("서버 연결 실패", "서버 연결에 실패했습니다.");
-                BackHandler.exitApp();
-            }
+            // 네트워크 에러 처리는 axiosService 인터셉터에서 처리
+            console.log("서버 Health Check 실패");
             return false;
         }
     },

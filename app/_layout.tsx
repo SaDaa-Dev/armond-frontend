@@ -6,11 +6,9 @@ declare global {
 }
 
 import { setNavigationRef } from "@/src/api/axiosService";
-import ServerErrorModal from "@/src/components/common/Button/ServerErrorModal";
 import { 
     initializeApp, 
-    type InitialRoute,
-    resetServerErrorAlert
+    type InitialRoute
 } from "@/src/services/appInitializationService";
 import { store } from "@/src/store/configureStore";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -66,7 +64,6 @@ const darkTheme = {
 };
 
 export default function RootLayout() {
-    const [serverError, setServerError] = useState<boolean>(false);
     const [isAppReady, setIsAppReady] = useState<boolean>(false);
     const [initialRoute, setInitialRoute] = useState<InitialRoute | null>(null);
     const [hasInitialized, setHasInitialized] = useState<boolean>(false);
@@ -88,15 +85,11 @@ export default function RootLayout() {
         try {
             setHasInitialized(true);
             
-            // 서버 에러 알림 플래그 리셋
-            resetServerErrorAlert();
-            
             console.log("🚀 앱 초기화 시작");
             const result = await initializeApp();
             
             console.log("초기화 결과:", result);
             
-            setServerError(result.hasServerError);
             setInitialRoute(result.initialRoute);
             
             if (!result.isSuccess && result.errorMessage) {
@@ -116,17 +109,12 @@ export default function RootLayout() {
             console.log("✅ 앱 준비 완료 - Splash screen 숨기기");
             await SplashScreen.hideAsync();
             
-            // 서버 에러가 있으면 라우팅하지 않음 (모달만 표시)
-            if (!serverError) {
-                setTimeout(() => {
-                    console.log("🔄 라우팅 수행:", initialRoute);
-                    router.replace(initialRoute);
-                }, 100);
-            } else {
-                console.log("🚫 서버 에러로 인해 라우팅 건너뜀");
-            }
+            setTimeout(() => {
+                console.log("🔄 라우팅 수행:", initialRoute);
+                router.replace(initialRoute);
+            }, 100);
         }
-    }, [isAppReady, initialRoute, serverError]);
+    }, [isAppReady, initialRoute]);
 
     useEffect(() => {
         handleAppInitialization();
@@ -146,7 +134,6 @@ export default function RootLayout() {
                         <PaperProvider theme={darkTheme}>
                             <Slot />
                         </PaperProvider>
-                        <ServerErrorModal serverError={serverError} />
                     </SafeAreaProvider>
                 </GestureHandlerRootView>
             </QueryClientProvider>

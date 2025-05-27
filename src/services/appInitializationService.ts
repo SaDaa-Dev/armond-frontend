@@ -7,9 +7,6 @@ import { createApiClient } from "../api/axiosService";
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
-// Alert 중복 표시 방지를 위한 플래그
-let hasShownServerErrorAlert = false;
-
 // 초기 라우팅 타입
 export type InitialRoute = "/(auth)/login" | "/(tabs)";
 
@@ -17,19 +14,26 @@ export type InitialRoute = "/(auth)/login" | "/(tabs)";
 export interface AppInitializationResult {
     isSuccess: boolean;
     initialRoute: InitialRoute;
-    hasServerError: boolean;
     errorMessage?: string;
 }
 
 /**
- * 저장된 액세스 토큰 존재 여부 확인
+ * 토큰 기반 인증 상태 확인
+ * 저장된 액세스 토큰과 리프레시 토큰의 존재 여부로 인증 상태를 판단합니다.
  */
 export const checkTokenAuthentication = async (): Promise<boolean> => {
     try {
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
-        return !!accessToken;
+        const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+
+        // 토큰이 모두 존재하면 인증된 것으로 간주
+        const isAuthenticated = !!(accessToken && refreshToken);
+
+        console.log(`토큰 확인 - 액세스: ${!!accessToken}, 리프레시: ${!!refreshToken}`);
+        
+        return isAuthenticated;
     } catch (error) {
-        console.error("토큰 확인 오류:", error);
+        console.error("토큰 인증 확인 오류:", error);
         return false;
     }
 };
@@ -63,13 +67,6 @@ export const checkServerHealth = async (): Promise<boolean> => {
 };
 
 /**
- * Alert 중복 표시 방지 플래그 리셋
- */
-export const resetServerErrorAlert = (): void => {
-    hasShownServerErrorAlert = false;
-};
-
-/**
  * 액세스 토큰 유효성 검증 (옵션)
  * 실제 API 호출로 토큰이 유효한지 확인하고 싶을 때 사용
  */
@@ -92,28 +89,15 @@ export const validateAccessToken = async (): Promise<boolean> => {
 
 /**
  * 앱 초기화 프로세스 실행
- * 1. 서버 Health Check
- * 2. 토큰 기반 인증 상태 확인
- * 3. 초기 라우팅 결정
+ * 토큰 기반 인증 상태 확인 후 초기 라우팅 결정
  */
 export const initializeApp = async (): Promise<AppInitializationResult> => {
     try {
-        // 1. 서버 Health Check (Alert 없이)
-        const isServerHealthy = await checkServerHealth();
-        if (!isServerHealthy) {
-            return {
-                isSuccess: false,
-                initialRoute: "/(auth)/login",
-                hasServerError: true,
-                errorMessage: "서버 연결에 실패했습니다",
-            };
-        }
-
-        // 2. 토큰 기반 인증 상태 확인
+        // 토큰 기반 인증 상태 확인
         console.log("🔐 인증 상태 확인 중...");
         const isAuthenticated = await checkTokenAuthentication();
 
-        // 3. 선택적으로 토큰 유효성 추가 검증
+        // 선택적으로 토큰 유효성 추가 검증
         // const isTokenValid = isAuthenticated ? await validateAccessToken() : false;
 
         const initialRoute: InitialRoute = isAuthenticated
@@ -130,7 +114,6 @@ export const initializeApp = async (): Promise<AppInitializationResult> => {
         return {
             isSuccess: true,
             initialRoute,
-            hasServerError: false,
         };
     } catch (error) {
         console.error("❌ 앱 초기화 오류:", error);
@@ -138,7 +121,6 @@ export const initializeApp = async (): Promise<AppInitializationResult> => {
         return {
             isSuccess: false,
             initialRoute: "/(auth)/login",
-            hasServerError: false,
             errorMessage:
                 error instanceof Error
                     ? error.message

@@ -2,12 +2,28 @@ import axios from "axios";
 import { AxiosRequestConfig, Method } from "axios";
 import { AxiosInstance } from "axios";
 import { BASE_URL } from "../constants/ApiConst";
-import { Alert } from "react-native";
 import { CommonActions } from "@react-navigation/native";
 import * as SecureStore from "expo-secure-store";
+import Toast from 'react-native-toast-message';
 
 // 전역 네비게이션 참조를 위한 변수
 let navigationRef: any = null;
+
+// Toast 중복 방지를 위한 플래그들 (간소화)
+let toastFlags = {
+    networkError: false,
+    authError: false
+};
+
+// 플래그 리셋 시간 (밀리초)
+const TOAST_RESET_TIME = 3000; // 3초
+
+// 플래그 리셋 함수
+const resetToastFlag = (errorType: keyof typeof toastFlags) => {
+    setTimeout(() => {
+        toastFlags[errorType] = false;
+    }, TOAST_RESET_TIME);
+};
 
 // 네비게이션 참조 설정 함수
 export const setNavigationRef = (ref: any) => {
@@ -69,44 +85,54 @@ export const createApiClient = (): AxiosInstance & {
                 return Promise.reject(error);
             }
 
-            const alertConfig = {
-                confirmText: "확인",
-                onConfirm: () => navigateToInitialScreen()
-            };
-
-            // 에러 타입별 알림 설정
-            const errorAlerts = {
-                networkError: {
-                    title: "네트워크 오류",
-                    message: "인터넷 연결을 확인해주세요.",
-                    shouldShow: !error.response
-                },
-                timeoutError: {
-                    title: "연결 시간 초과", 
-                    message: "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.",
-                    shouldShow: error.code === "ECONNABORTED"
-                },
-                serverError: {
-                    title: "서버 오류",
-                    message: "서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-                    shouldShow: error.response?.status && error.response?.status >= 500
-                },
-                authError: {
-                    title: "인증 오류",
-                    message: "로그인이 필요한 서비스입니다.",
-                    shouldShow: error.response?.status && [401, 403].includes(error.response?.status)
-                }
-            };
-
-            // 해당하는 에러 찾아서 알림 표시
-            Object.values(errorAlerts).forEach(({ title, message, shouldShow }) => {
-                if (shouldShow) {
-                    Alert.alert(title, message, [{
-                        text: alertConfig.confirmText,
-                        onPress: alertConfig.onConfirm
-                    }]);
-                }
-            });
+            // 네트워크 오류 (서버 연결 불가)
+            if (!error.response && !toastFlags.networkError) {
+                toastFlags.networkError = true;
+                Toast.show({
+                    type: 'error',
+                    text1: '네트워크 오류',
+                    text2: '인터넷 연결을 확인해주세요',
+                    visibilityTime: 4000,
+                    autoHide: true,
+                });
+                resetToastFlag('networkError');
+            }
+            // 타임아웃 오류
+            else if (error.code === "ECONNABORTED") {
+                Toast.show({
+                    type: 'error',
+                    text1: '연결 시간 초과',
+                    text2: '서버 응답이 지연되고 있습니다',
+                    visibilityTime: 3000,
+                    autoHide: true,
+                });
+            }
+            // 서버 오류 (5xx)
+            else if (error.response?.status && error.response?.status >= 500) {
+                Toast.show({
+                    type: 'error',
+                    text1: '서버 오류',
+                    text2: '서버에 문제가 발생했습니다',
+                    visibilityTime: 3000,
+                    autoHide: true,
+                });
+            }
+            // 인증 오류 (401, 403)
+            else if (error.response?.status && [401, 403].includes(error.response?.status) && !toastFlags.authError) {
+                toastFlags.authError = true;
+                Toast.show({
+                    type: 'error',
+                    text1: '인증 오류',
+                    text2: '로그인이 필요합니다',
+                    visibilityTime: 3000,
+                    autoHide: true,
+                    onHide: () => {
+                        // 토스트가 사라진 후 로그인 화면으로 이동
+                        setTimeout(() => navigateToInitialScreen(), 500);
+                    }
+                });
+                resetToastFlag('authError');
+            }
 
             return Promise.reject(error);
         }
