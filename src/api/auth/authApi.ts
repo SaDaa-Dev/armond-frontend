@@ -1,21 +1,17 @@
-import { BASE_URL } from "../../constants/ApiConst";
-import { components } from "../api-types";
-import * as SecureStore from "expo-secure-store";
-import axios from "axios";
-import { createApiClient } from "../axiosService";
 import { router } from "expo-router";
-import { Alert, BackHandler } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { components } from "../api-types";
+import { createApiClient } from "../axiosService";
 
 // 토큰 스토리지 키 상수
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
-type LoginDto = components["schemas"]["LoginDto"];
-type RefreshTokenRequest = components["schemas"]["RefreshTokenRequest"];
-type ApiResponseTokenResponse =
-    components["schemas"]["ApiResponseTokenResponse"];
-type ApiResponseString = components["schemas"]["ApiResponseString"];
-type SignUpDto = components["schemas"]["SignUpDto"];
+type LoginRequestDto = components["schemas"]["LoginRequestDto"];
+type TokenRequestDto = components["schemas"]["TokenDto"];
+type TokenResponseDto = components["schemas"]["ApiResponseTokenDto"];
+type StringResponseDto = components["schemas"]["ApiResponseString"];
+type RegisterRequestDto = components["schemas"]["RegisterRequestDto"];
 
 const api = createApiClient();
 
@@ -28,19 +24,18 @@ export const authApi = {
             );
             return response.data;
         } catch (error) {
-            // 네트워크 에러 처리는 axiosService 인터셉터에서 처리
-            console.log("서버 Health Check 실패");
             return false;
         }
     },
 
-    login: async (loginDto: LoginDto): Promise<ApiResponseTokenResponse> => {
+    login: async (
+        loginRequestDto: LoginRequestDto
+    ): Promise<TokenResponseDto> => {
         try {
-            console.log("LoginDto", loginDto);
             const response = await api.requestWithMethod(
                 "POST",
                 "/auth/login",
-                loginDto
+                loginRequestDto
             );
             console.log("login response", response.data);
             return response.data;
@@ -49,7 +44,7 @@ export const authApi = {
         }
     },
 
-    logout: async (): Promise<ApiResponseString> => {
+    logout: async (): Promise<StringResponseDto> => {
         try {
             console.log("로그아웃 시도");
             const accessToken = await SecureStore.getItemAsync(
@@ -78,30 +73,76 @@ export const authApi = {
         }
     },
 
-    signup: async (signUpDto: SignUpDto): Promise<ApiResponseTokenResponse> => {
+    register: async (registerRequestDto: RegisterRequestDto): Promise<any> => {
         try {
+            console.log("🔗 회원가입 요청 시작");
+            console.log("📤 요청 데이터:", registerRequestDto);
+            console.log("🌐 API 기본 URL:", api.defaults.baseURL);
+            console.log("🎯 요청 URL:", `${api.defaults.baseURL}/auth/register`);
+            
             const response = await api.requestWithMethod(
                 "POST",
-                "/auth/signup",
-                signUpDto
+                "/auth/register",
+                registerRequestDto
             );
-            return response.data;
-        } catch (error) {
-            throw new Error("회원가입에 실패했습니다");
+            
+            console.log("✅ 회원가입 응답:", response.data);
+            console.log("✅ 응답 상태:", response.status);
+            
+            // 백엔드에서 문자열이나 객체 응답을 모두 처리
+            if (typeof response.data === 'string') {
+                return {
+                    status: "SUCCESS",
+                    message: response.data,
+                    data: response.data
+                };
+            } else if (response.data && typeof response.data === 'object') {
+                return response.data;
+            } else {
+                return {
+                    status: "SUCCESS",
+                    message: "회원가입이 완료되었습니다.",
+                    data: response.data
+                };
+            }
+        } catch (error: any) {
+            console.error("❌ 회원가입 실패:");
+            console.error("에러 객체:", error);
+            
+            if (error.response) {
+                // 서버가 응답했지만 에러 상태 코드
+                console.error("응답 상태:", error.response.status);
+                console.error("응답 데이터:", error.response.data);
+                console.error("응답 헤더:", error.response.headers);
+                
+                // 백엔드 validation 에러 메시지 추출
+                if (error.response.data && error.response.data.message) {
+                    throw new Error(error.response.data.message);
+                }
+            } else if (error.request) {
+                // 요청은 보냈지만 응답을 받지 못함
+                console.error("요청 객체:", error.request);
+                console.error("네트워크 오류 또는 서버 연결 실패");
+                throw new Error("서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.");
+            } else {
+                // 요청 설정 중 에러
+                console.error("요청 설정 에러:", error.message);
+                throw new Error(`요청 설정 오류: ${error.message}`);
+            }
+            
+            throw new Error(`회원가입에 실패했습니다: ${error.message || '알 수 없는 오류'}`);
         }
     },
 
-    reissue: async (
-        refreshToken: string
-    ): Promise<ApiResponseTokenResponse> => {
+    reissue: async (refreshToken: string): Promise<TokenResponseDto> => {
         try {
-            const refreshTokenRequest: RefreshTokenRequest = {
+            const tokenRequestDto: TokenRequestDto = {
                 refreshToken,
             };
             const response = await api.requestWithMethod(
                 "POST",
                 "/auth/reissue",
-                refreshTokenRequest
+                tokenRequestDto
             );
             return response.data;
         } catch (error) {

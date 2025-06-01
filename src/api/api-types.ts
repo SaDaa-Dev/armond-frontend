@@ -88,22 +88,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/signup": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: operations["signup"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/reissue": {
         parameters: {
             query?: never;
@@ -118,6 +102,22 @@ export interface paths {
          * @description RefreshToken을 사용해 새로운 AccessToken을 발급
          */
         post: operations["reissue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["register"];
         delete?: never;
         options?: never;
         head?: never;
@@ -245,11 +245,24 @@ export interface components {
             data?: components["schemas"]["ExerciseListDto"];
             error?: string;
         };
-        SignUpDto: {
+        ApiResponseTokenDto: {
+            status?: string;
+            message?: string;
+            data?: components["schemas"]["TokenDto"];
+            error?: string;
+        };
+        TokenDto: {
+            grantType?: string;
+            accessToken?: string;
+            refreshToken?: string;
+            /** Format: int64 */
+            accessTokenExpiresIn?: number;
+        };
+        RegisterRequestDto: {
+            phoneNumber: string;
+            password: string;
             name?: string;
             nickName?: string;
-            phoneNumber?: string;
-            password?: string;
             /** @enum {string} */
             gender?: "MALE" | "FEMALE";
             /** Format: double */
@@ -259,21 +272,8 @@ export interface components {
             /** Format: int32 */
             goalCalories?: number;
         };
-        ApiResponseTokenResponse: {
-            status?: string;
-            message?: string;
-            data?: components["schemas"]["TokenResponse"];
-            error?: string;
-        };
-        TokenResponse: {
-            accessToken?: string;
-            refreshToken?: string;
-        };
-        RefreshTokenRequest: {
-            refreshToken?: string;
-        };
-        LoginDto: {
-            phoneNumber?: string;
+        LoginRequestDto: {
+            memberName?: string;
             password?: string;
         };
         ApiResponseListRoutineDto: {
@@ -508,18 +508,17 @@ export interface operations {
             };
         };
     };
-    signup: {
+    reissue: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Authorization: string;
+                "Refresh-Token": string;
+            };
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SignUpDto"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description OK */
             200: {
@@ -527,12 +526,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseTokenResponse"];
+                    "*/*": components["schemas"]["ApiResponseTokenDto"];
                 };
             };
         };
     };
-    reissue: {
+    register: {
         parameters: {
             query?: never;
             header?: never;
@@ -541,7 +540,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RefreshTokenRequest"];
+                "application/json": components["schemas"]["RegisterRequestDto"];
             };
         };
         responses: {
@@ -551,7 +550,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseTokenResponse"];
+                    "*/*": string;
                 };
             };
         };
@@ -559,7 +558,9 @@ export interface operations {
     logout: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Authorization: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -585,7 +586,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["LoginDto"];
+                "application/json": components["schemas"]["LoginRequestDto"];
             };
         };
         responses: {
@@ -595,7 +596,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseTokenResponse"];
+                    "*/*": components["schemas"]["ApiResponseTokenDto"];
                 };
             };
         };

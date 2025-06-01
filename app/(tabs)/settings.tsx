@@ -1,4 +1,4 @@
-import { StyleSheet, View, Alert } from "react-native";
+import { StyleSheet, View, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, Card, Avatar, Divider, List, useTheme } from "react-native-paper";
 import { router } from "expo-router";
@@ -7,9 +7,11 @@ import { authApi } from "../../src/api/auth/authApi";
 import { useThemeContext, type ThemeMode } from "@/src/contexts/ThemeContext";
 import { getSpacing, getRadius, getShadow } from "@/utils/Theme";
 import { useColorScheme } from "react-native";
+import { SecureStorageDebugPanel } from "@/src/components/debug/SecureStorageDebugPanel";
 
 export default function Settings() {
     const [isLoading, setIsLoading] = useState(false);
+    const [showDebugPanel, setShowDebugPanel] = useState(false);
     const { themeMode, setThemeMode, isDark } = useThemeContext();
     const theme = useTheme();
     const systemColorScheme = useColorScheme();
@@ -81,182 +83,216 @@ export default function Settings() {
             styles.container,
             { backgroundColor: theme.colors.background }
         ]}>
-            <View style={styles.header}>
-                <Text 
-                    variant="headlineMedium" 
-                    style={[
-                        styles.headerTitle,
-                        { color: theme.colors.onBackground }
-                    ]}
-                >
-                    설정
-                </Text>
-            </View>
-            
-            <Card style={[
-                styles.profileCard,
-                { backgroundColor: theme.colors.surface }
-            ]}>
-                <Card.Content style={styles.profileContent}>
-                    <Avatar.Icon 
-                        size={80} 
-                        icon="account" 
+            <ScrollView 
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
+                onStartShouldSetResponder={() => true}
+                onResponderGrant={() => {
+                    // 터치 이벤트를 여기서 처리하고 전파되지 않도록 함
+                    return false;
+                }}
+            >
+                <View style={styles.header}>
+                    <Text 
+                        variant="headlineMedium" 
                         style={[
-                            styles.avatar,
-                            { backgroundColor: theme.colors.primary }
-                        ]} 
-                    />
-                    <View style={styles.profileInfo}>
-                        <Text 
-                            variant="titleLarge"
-                            style={{ color: theme.colors.onSurface }}
-                        >
-                            사용자
-                        </Text>
-                        <Text 
-                            variant="bodyMedium" 
+                            styles.headerTitle,
+                            { color: theme.colors.onBackground }
+                        ]}
+                    >
+                        설정
+                    </Text>
+                </View>
+                
+                <Card style={[
+                    styles.profileCard,
+                    { backgroundColor: theme.colors.surface }
+                ]}>
+                    <Card.Content style={styles.profileContent}>
+                        <Avatar.Icon 
+                            size={80} 
+                            icon="account" 
                             style={[
-                                styles.subText,
-                                { color: theme.colors.onSurfaceVariant }
+                                styles.avatar,
+                                { backgroundColor: theme.colors.primary }
+                            ]} 
+                        />
+                        <View style={styles.profileInfo}>
+                            <Text 
+                                variant="titleLarge"
+                                style={{ color: theme.colors.onSurface }}
+                            >
+                                사용자
+                            </Text>
+                            <Text 
+                                variant="bodyMedium" 
+                                style={[
+                                    styles.subText,
+                                    { color: theme.colors.onSurfaceVariant }
+                                ]}
+                            >
+                                010-0000-0000
+                            </Text>
+                        </View>
+                    </Card.Content>
+                </Card>
+
+                {/* 디버깅 정보 카드 */}
+                <Card style={[
+                    styles.settingsCard,
+                    { backgroundColor: theme.colors.surface }
+                ]}>
+                    <Card.Content>
+                        <Text 
+                            variant="titleMedium" 
+                            style={[
+                                styles.sectionTitle,
+                                { color: theme.colors.onSurface }
                             ]}
                         >
-                            010-0000-0000
+                            🐛 디버깅 정보
                         </Text>
-                    </View>
-                </Card.Content>
-            </Card>
+                        <Divider style={[
+                            styles.divider,
+                            { backgroundColor: theme.colors.outline }
+                        ]} />
+                        
+                        <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                            현재 테마 모드: {themeMode}
+                        </Text>
+                        <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                            시스템 테마: {systemColorScheme}
+                        </Text>
+                        <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                            다크 모드 활성화: {isDark ? '예' : '아니오'}
+                        </Text>
+                        <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
+                            현재 배경색: {theme.colors.background}
+                        </Text>
+                        
+                        {__DEV__ && (
+                            <Button
+                                mode="outlined"
+                                style={[
+                                    styles.button,
+                                    { borderColor: theme.colors.primary }
+                                ]}
+                                textColor={theme.colors.primary}
+                                onPress={() => setShowDebugPanel(true)}
+                                icon="security"
+                            >
+                                Secure Storage 디버깅
+                            </Button>
+                        )}
+                    </Card.Content>
+                </Card>
 
-            {/* 디버깅 정보 카드 */}
-            <Card style={[
-                styles.settingsCard,
-                { backgroundColor: theme.colors.surface }
-            ]}>
-                <Card.Content>
-                    <Text 
-                        variant="titleMedium" 
-                        style={[
-                            styles.sectionTitle,
-                            { color: theme.colors.onSurface }
-                        ]}
-                    >
-                        🐛 디버깅 정보
-                    </Text>
-                    <Divider style={[
-                        styles.divider,
-                        { backgroundColor: theme.colors.outline }
-                    ]} />
-                    
-                    <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                        현재 테마 모드: {themeMode}
-                    </Text>
-                    <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                        시스템 테마: {systemColorScheme}
-                    </Text>
-                    <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                        다크 모드 활성화: {isDark ? '예' : '아니오'}
-                    </Text>
-                    <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>
-                        현재 배경색: {theme.colors.background}
-                    </Text>
-                </Card.Content>
-            </Card>
-
-            {/* 테마 설정 카드 */}
-            <Card style={[
-                styles.settingsCard,
-                { backgroundColor: theme.colors.surface }
-            ]}>
-                <Card.Content>
-                    <Text 
-                        variant="titleMedium" 
-                        style={[
-                            styles.sectionTitle,
-                            { color: theme.colors.onSurface }
-                        ]}
-                    >
-                        화면 설정
-                    </Text>
-                    <Divider style={[
-                        styles.divider,
-                        { backgroundColor: theme.colors.outline }
-                    ]} />
-                    
-                    <List.Section>
-                        <List.Subheader style={{ color: theme.colors.onSurfaceVariant }}>
-                            테마 모드
-                        </List.Subheader>
-                        {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
-                            <List.Item
-                                key={mode}
-                                title={getThemeDisplayName(mode)}
-                                description={
-                                    mode === 'system' 
-                                        ? '시스템 설정을 따릅니다' 
-                                        : `앱을 ${getThemeDisplayName(mode)}로 표시합니다`
-                                }
-                                left={(props) => (
-                                    <List.Icon 
-                                        {...props} 
-                                        icon={getThemeIcon(mode)}
-                                        color={theme.colors.onSurface}
-                                    />
-                                )}
-                                right={(props) => (
-                                    themeMode === mode ? (
+                {/* 테마 설정 카드 */}
+                <Card style={[
+                    styles.settingsCard,
+                    { backgroundColor: theme.colors.surface }
+                ]}>
+                    <Card.Content>
+                        <Text 
+                            variant="titleMedium" 
+                            style={[
+                                styles.sectionTitle,
+                                { color: theme.colors.onSurface }
+                            ]}
+                        >
+                            화면 설정
+                        </Text>
+                        <Divider style={[
+                            styles.divider,
+                            { backgroundColor: theme.colors.outline }
+                        ]} />
+                        
+                        <List.Section>
+                            <List.Subheader style={{ color: theme.colors.onSurfaceVariant }}>
+                                테마 모드
+                            </List.Subheader>
+                            {(['light', 'dark', 'system'] as ThemeMode[]).map((mode) => (
+                                <List.Item
+                                    key={mode}
+                                    title={getThemeDisplayName(mode)}
+                                    description={
+                                        mode === 'system' 
+                                            ? '시스템 설정을 따릅니다' 
+                                            : `앱을 ${getThemeDisplayName(mode)}로 표시합니다`
+                                    }
+                                    left={(props) => (
                                         <List.Icon 
                                             {...props} 
-                                            icon="check" 
-                                            color={theme.colors.primary}
+                                            icon={getThemeIcon(mode)}
+                                            color={theme.colors.onSurface}
                                         />
-                                    ) : null
-                                )}
-                                onPress={() => handleThemeChange(mode)}
-                                style={[
-                                    styles.themeOption,
-                                    themeMode === mode && {
-                                        backgroundColor: theme.colors.primary + '20'
-                                    }
-                                ]}
-                            />
-                        ))}
-                    </List.Section>
-                </Card.Content>
-            </Card>
+                                    )}
+                                    right={(props) => (
+                                        themeMode === mode ? (
+                                            <List.Icon 
+                                                {...props} 
+                                                icon="check" 
+                                                color={theme.colors.primary}
+                                            />
+                                        ) : null
+                                    )}
+                                    onPress={() => handleThemeChange(mode)}
+                                    style={[
+                                        styles.themeOption,
+                                        themeMode === mode && {
+                                            backgroundColor: theme.colors.primary + '20'
+                                        }
+                                    ]}
+                                />
+                            ))}
+                        </List.Section>
+                    </Card.Content>
+                </Card>
+                
+                <Card style={[
+                    styles.settingsCard,
+                    { backgroundColor: theme.colors.surface }
+                ]}>
+                    <Card.Content>
+                        <Text 
+                            variant="titleMedium" 
+                            style={[
+                                styles.sectionTitle,
+                                { color: theme.colors.onSurface }
+                            ]}
+                        >
+                            계정
+                        </Text>
+                        <Divider style={[
+                            styles.divider,
+                            { backgroundColor: theme.colors.outline }
+                        ]} />
+                        
+                        <Button 
+                            mode="outlined" 
+                            style={[
+                                styles.button,
+                                { borderColor: theme.colors.error }
+                            ]} 
+                            textColor={theme.colors.error}
+                            onPress={handleLogout}
+                            loading={isLoading}
+                            disabled={isLoading}
+                        >
+                            로그아웃
+                        </Button>
+                    </Card.Content>
+                </Card>
+            </ScrollView>
             
-            <Card style={[
-                styles.settingsCard,
-                { backgroundColor: theme.colors.surface }
-            ]}>
-                <Card.Content>
-                    <Text 
-                        variant="titleMedium" 
-                        style={[
-                            styles.sectionTitle,
-                            { color: theme.colors.onSurface }
-                        ]}
-                    >
-                        계정
-                    </Text>
-                    <Divider style={[
-                        styles.divider,
-                        { backgroundColor: theme.colors.outline }
-                    ]} />
-                    
-                    <Button 
-                        mode="outlined" 
-                        style={[
-                            styles.button,
-                            { borderColor: theme.colors.error }
-                        ]} 
-                        textColor={theme.colors.error}
-                        onPress={handleLogout}
-                        loading={isLoading}
-                        disabled={isLoading}
-                    >
-                        로그아웃
-                    </Button>
-                </Card.Content>
-            </Card>
+            {/* Secure Storage Debug Panel */}
+            {__DEV__ && (
+                <SecureStorageDebugPanel
+                    visible={showDebugPanel}
+                    onClose={() => setShowDebugPanel(false)}
+                />
+            )}
         </SafeAreaView>
     );
 }
@@ -265,6 +301,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: getSpacing('md'),
+    },
+    scrollView: {
+        flex: 1,
     },
     header: {
         marginBottom: getSpacing('lg'),

@@ -21,7 +21,7 @@ export interface AppInitializationResult {
  * 토큰 기반 인증 상태 확인
  * 저장된 액세스 토큰과 리프레시 토큰의 존재 여부로 인증 상태를 판단합니다.
  */
-export const checkTokenAuthentication = async (): Promise<boolean> => {
+export const isTokenExist = async (): Promise<boolean> => {
     try {
         const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
         const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
@@ -95,18 +95,17 @@ export const initializeApp = async (): Promise<AppInitializationResult> => {
     try {
         // 토큰 기반 인증 상태 확인
         console.log("🔐 인증 상태 확인 중...");
-        const isAuthenticated = await checkTokenAuthentication();
+        const hasToken = await isTokenExist();
 
-        // 선택적으로 토큰 유효성 추가 검증
-        // const isTokenValid = isAuthenticated ? await validateAccessToken() : false;
+        const isTokenValid = hasToken ? await validateAccessToken() : false;
 
-        const initialRoute: InitialRoute = isAuthenticated
+        const initialRoute: InitialRoute = hasToken
             ? "/(tabs)"
             : "/(auth)/login";
 
         console.log(
             `✅ 초기화 완료 - 인증 상태: ${
-                isAuthenticated ? "인증됨" : "인증되지 않음"
+                hasToken ? "인증됨" : "인증되지 않음"
             }`
         );
         console.log(`📱 초기 라우팅: ${initialRoute}`);

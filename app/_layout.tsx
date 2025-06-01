@@ -1,7 +1,6 @@
 declare global {
     interface Window {
         __REDUX_DEVTOOLS_EXTENSION__?: any;
-        __REACT_DEVTOOLS_PORT__?: number;
     }
 }
 
@@ -23,18 +22,6 @@ import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
 import { CustomLightTheme, CustomDarkTheme } from "@/utils/Theme";
 import { ThemeProvider, useThemeContext } from "@/src/contexts/ThemeContext";
-
-// React Native Debugger 설정
-if (__DEV__) {
-    // @ts-ignore
-    global.XMLHttpRequest = global.originalXMLHttpRequest || global.XMLHttpRequest;
-    // @ts-ignore
-    global.FormData = global.originalFormData || global.FormData;
-
-    // React Native Debugger 포트 설정
-    // @ts-ignore
-    window.__REACT_DEVTOOLS_PORT__ = 19000;
-}
 
 SplashScreen.preventAutoHideAsync();
 

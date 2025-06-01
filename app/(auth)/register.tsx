@@ -13,6 +13,7 @@ import {
     Card,
     HelperText,
     RadioButton,
+    Icon,
 } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -57,6 +58,19 @@ export default function Signup() {
 
     const password = watch("password");
 
+    // 비밀번호 강도 체크 함수
+    const checkPasswordStrength = (password: string) => {
+        return {
+            hasLetter: /[a-zA-Z]/.test(password),
+            
+            hasNumber: /\d/.test(password),
+            hasSpecialChar: /[@#$%^&+=!]/.test(password),
+            isValidLength: password.length >= 8 && password.length <= 20,
+        };
+    };
+
+    const passwordStrength = checkPasswordStrength(password || "");
+
     // 전화번호 형식 자동 변환 (000-0000-0000)
     const formatPhoneNumber = (text: string) => {
         // 숫자만 남기고 모든 문자 제거
@@ -95,10 +109,10 @@ export default function Signup() {
             
             console.log("회원가입 요청 전화번호:", cleanedPhoneNumber);
 
-            const response = await authApi.signup({
+            const registerResponse = await authApi.register({
                 phoneNumber: cleanedPhoneNumber,
                 password: data.password,
-                name: data.name,
+                name: data.name || undefined,
                 nickName: data.nickName || undefined,
                 gender: data.gender,
                 height: data.height ? parseFloat(data.height) : undefined,
@@ -108,17 +122,27 @@ export default function Signup() {
                     : undefined,
             });
 
-            if (response.data) {
-                // 토큰 저장
-                await authApi.setTokens(
-                    response.data.accessToken || "",
-                    response.data.refreshToken || ""
-                );
+            if (registerResponse.status === "SUCCESS") {
+                // 회원가입 성공 후 자동 로그인
+                const loginResponse = await authApi.login({
+                    memberName: cleanedPhoneNumber,
+                    password: data.password,
+                });
 
-                // 메인 화면으로 리다이렉트
-                router.replace("/(tabs)");
+                if (loginResponse.data) {
+                    // 토큰 저장
+                    await authApi.setTokens(
+                        loginResponse.data.accessToken || "",
+                        loginResponse.data.refreshToken || ""
+                    );
+
+                    // 메인 화면으로 리다이렉트
+                    router.replace("/(tabs)");
+                } else {
+                    setError(loginResponse.error || "로그인에 실패했습니다.");
+                }
             } else {
-                setError(response.error || "회원가입에 실패했습니다.");
+                setError(registerResponse.error || "회원가입에 실패했습니다.");
             }
         } catch (error) {
             setError("회원가입 중 오류가 발생했습니다.");
@@ -220,6 +244,14 @@ export default function Signup() {
                                     value: 8,
                                     message: "비밀번호는 8자 이상이어야 합니다",
                                 },
+                                maxLength: {
+                                    value: 20,
+                                    message: "비밀번호는 20자 이하여야 합니다",
+                                },
+                                pattern: {
+                                    value: /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@#$%^&+=!]).*$/,
+                                    message: "비밀번호는 영문, 숫자, 특수문자를 포함해야 합니다",
+                                },
                             }}
                             render={({
                                 field: { onChange, onBlur, value },
@@ -233,6 +265,7 @@ export default function Signup() {
                                     style={styles.input}
                                     mode="outlined"
                                     error={!!errors.password}
+                                    placeholder="8-20자, 영문+숫자+특수문자"
                                 />
                             )}
                         />
@@ -243,6 +276,64 @@ export default function Signup() {
                             >
                                 {errors.password.message}
                             </HelperText>
+                        )}
+                        
+                        {/* 비밀번호 강도 표시 */}
+                        {password && (
+                            <View style={styles.passwordStrengthContainer}>
+                                <View style={styles.passwordStrengthItem}>
+                                    <Icon
+                                        source={passwordStrength.hasLetter ? "check-circle" : "circle-outline"}
+                                        color={passwordStrength.hasLetter ? "#4CAF50" : "#9E9E9E"}
+                                        size={16}
+                                    />
+                                    <Text style={[
+                                        styles.passwordStrengthText,
+                                        { color: passwordStrength.hasLetter ? "#4CAF50" : "#9E9E9E" }
+                                    ]}>
+                                        영문자 포함
+                                    </Text>
+                                </View>
+                                <View style={styles.passwordStrengthItem}>
+                                    <Icon
+                                        source={passwordStrength.hasNumber ? "check-circle" : "circle-outline"}
+                                        color={passwordStrength.hasNumber ? "#4CAF50" : "#9E9E9E"}
+                                        size={16}
+                                    />
+                                    <Text style={[
+                                        styles.passwordStrengthText,
+                                        { color: passwordStrength.hasNumber ? "#4CAF50" : "#9E9E9E" }
+                                    ]}>
+                                        숫자 포함
+                                    </Text>
+                                </View>
+                                <View style={styles.passwordStrengthItem}>
+                                    <Icon
+                                        source={passwordStrength.hasSpecialChar ? "check-circle" : "circle-outline"}
+                                        color={passwordStrength.hasSpecialChar ? "#4CAF50" : "#9E9E9E"}
+                                        size={16}
+                                    />
+                                    <Text style={[
+                                        styles.passwordStrengthText,
+                                        { color: passwordStrength.hasSpecialChar ? "#4CAF50" : "#9E9E9E" }
+                                    ]}>
+                                        특수문자 포함 (@#$%^&+=!)
+                                    </Text>
+                                </View>
+                                <View style={styles.passwordStrengthItem}>
+                                    <Icon
+                                        source={passwordStrength.isValidLength ? "check-circle" : "circle-outline"}
+                                        color={passwordStrength.isValidLength ? "#4CAF50" : "#9E9E9E"}
+                                        size={16}
+                                    />
+                                    <Text style={[
+                                        styles.passwordStrengthText,
+                                        { color: passwordStrength.isValidLength ? "#4CAF50" : "#9E9E9E" }
+                                    ]}>
+                                        8-20자 길이
+                                    </Text>
+                                </View>
+                            </View>
                         )}
 
                         <Controller
@@ -519,5 +610,22 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginTop: 16,
+    },
+    passwordStrengthContainer: {
+        marginTop: 8,
+        marginBottom: 16,
+        padding: 12,
+        backgroundColor: "rgba(0, 0, 0, 0.05)",
+        borderRadius: 8,
+    },
+    passwordStrengthItem: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 4,
+    },
+    passwordStrengthText: {
+        fontSize: 14,
+        marginLeft: 8,
+        fontWeight: "500",
     },
 });

@@ -138,7 +138,7 @@ export default function Login() {
                         <Text>계정이 없으신가요?</Text>
                         <Button
                             mode="text"
-                            onPress={() => router.push("/(auth)/signup" as any)}
+                            onPress={() => router.push("/(auth)/register" as any)}
                             compact
                         >
                             회원가입
