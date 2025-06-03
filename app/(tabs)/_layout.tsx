@@ -60,7 +60,13 @@ export default function TabLayout() {
             />
             <Tabs.Screen name="calendar" options={{ title: "캘린더" }} />
             <Tabs.Screen name="statistics" options={{ title: "통계" }} />
-            <Tabs.Screen name="settings" options={{ title: "설정" }} />
+            <Tabs.Screen 
+                name="settings" 
+                options={{ 
+                    title: "설정",
+                    tabBarLabel: "설정",
+                }} 
+            />
         </Tabs>
     );
 }

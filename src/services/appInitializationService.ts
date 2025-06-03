@@ -2,9 +2,11 @@ import { authApi } from "../api/auth/authApi";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 import { createApiClient } from "../api/axiosService";
+import { store } from '@/src/store/configureStore';
+import { setAuthenticated, setMemberInfo, setAuthLoading } from '@/src/store/features/authSlice';
 
 // 토큰 키 상수
-const ACCESS_TOKEN_KEY = "access_token";
+const ACCESS_TOKEN_KEY = "access_token";    
 const REFRESH_TOKEN_KEY = "refresh_token";
 
 // 초기 라우팅 타입
@@ -47,7 +49,6 @@ export const checkServerHealth = async (): Promise<boolean> => {
         
         // authApi.checkHealth 대신 직접 health check 수행 (alert 없이)
         const api = createApiClient();
-        const response = await api.requestWithMethod("GET", "/actuator/health");
         
         console.log("서버 Health Check 성공");
         return true;
@@ -91,40 +92,49 @@ export const validateAccessToken = async (): Promise<boolean> => {
  * 앱 초기화 프로세스 실행
  * 토큰 기반 인증 상태 확인 후 초기 라우팅 결정
  */
-export const initializeApp = async (): Promise<AppInitializationResult> => {
+export const initializeApp = async (): Promise<InitialRoute> => {
+    store.dispatch(setAuthLoading(true));
+    
     try {
-        // 토큰 기반 인증 상태 확인
-        console.log("🔐 인증 상태 확인 중...");
-        const hasToken = await isTokenExist();
-
-        const isTokenValid = hasToken ? await validateAccessToken() : false;
-
-        const initialRoute: InitialRoute = hasToken
-            ? "/(tabs)"
-            : "/(auth)/login";
-
-        console.log(
-            `✅ 초기화 완료 - 인증 상태: ${
-                hasToken ? "인증됨" : "인증되지 않음"
-            }`
-        );
-        console.log(`📱 초기 라우팅: ${initialRoute}`);
-
-        return {
-            isSuccess: true,
-            initialRoute,
-        };
+        console.log("앱 초기화 시작");
+        
+        // 1. 토큰 확인
+        const accessToken = await authApi.getAccessToken();
+        const refreshToken = await authApi.getRefreshToken();
+        
+        console.log(`토큰 확인 - 액세스: ${!!accessToken}, 리프레시: ${!!refreshToken}`);
+        
+        if (accessToken && refreshToken) {
+            // 2. 사용자 정보 로드
+            const memberInfo = await authApi.getMemberInfo();
+            
+            if (memberInfo) {
+                console.log("앱 초기화: 인증 성공, 메인 화면으로 이동");
+                store.dispatch(setAuthenticated(true));
+                store.dispatch(setMemberInfo(memberInfo));
+                return "/(tabs)";
+            } else {
+                // 토큰은 있지만 사용자 정보가 없는 경우
+                console.log("앱 초기화: 사용자 정보 없음, 로그아웃 처리");
+                store.dispatch(setAuthenticated(false));
+                store.dispatch(setMemberInfo(null));
+                await authApi.clearAllStoredData();
+                return "/(auth)/login";
+            }
+        } else {
+            console.log("앱 초기화: 토큰 없음, 로그인 화면으로 이동");
+            store.dispatch(setAuthenticated(false));
+            store.dispatch(setMemberInfo(null));
+            return "/(auth)/login";
+        }
     } catch (error) {
-        console.error("❌ 앱 초기화 오류:", error);
-
-        return {
-            isSuccess: false,
-            initialRoute: "/(auth)/login",
-            errorMessage:
-                error instanceof Error
-                    ? error.message
-                    : "초기화 중 알 수 없는 오류가 발생했습니다",
-        };
+        console.error('앱 초기화 실패:', error);
+        store.dispatch(setAuthenticated(false));
+        store.dispatch(setMemberInfo(null));
+        await authApi.clearAllStoredData();
+        return "/(auth)/login";
+    } finally {
+        store.dispatch(setAuthLoading(false));
     }
 };
 

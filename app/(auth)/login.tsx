@@ -4,11 +4,9 @@ import { Text, TextInput, Button, Card, useTheme } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { authApi } from "../../src/api/auth/authApi";
+import { components } from "../../src/api/api-types";
 
-interface LoginDto {
-    phoneNumber: string;
-    password: string;
-}
+type LoginRequestDto = components["schemas"]["LoginRequestDto"];
 
 export default function Login() {
     const theme = useTheme();
@@ -60,17 +58,13 @@ export default function Login() {
             console.log("로그인 요청 전화번호:", cleanedPhoneNumber);
 
             const response = await authApi.login({
-                phoneNumber: cleanedPhoneNumber,
+                memberName: cleanedPhoneNumber,
                 password,
-            } as LoginDto);
+            } as LoginRequestDto);
 
             if (response.data) {
-                // 토큰 저장
-                await authApi.setTokens(
-                    response.data.accessToken || "",
-                    response.data.refreshToken || ""
-                );
-
+                console.log("로그인 성공! 사용자 정보:", response.data.memberInfo);
+                
                 // 메인 화면으로 리다이렉트
                 router.replace("/(tabs)");
             } else {

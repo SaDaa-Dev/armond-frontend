@@ -251,12 +251,28 @@ export interface components {
             data?: components["schemas"]["TokenDto"];
             error?: string;
         };
+        MemberInfo: {
+            /** Format: int64 */
+            id?: number;
+            phoneNumber?: string;
+            name?: string;
+            nickName?: string;
+            /** @enum {string} */
+            gender?: "MALE" | "FEMALE";
+            /** Format: double */
+            height?: number;
+            /** Format: double */
+            weight?: number;
+            /** Format: int32 */
+            goalCalories?: number;
+        };
         TokenDto: {
             grantType?: string;
             accessToken?: string;
             refreshToken?: string;
             /** Format: int64 */
             accessTokenExpiresIn?: number;
+            memberInfo?: components["schemas"]["MemberInfo"];
         };
         RegisterRequestDto: {
             phoneNumber: string;

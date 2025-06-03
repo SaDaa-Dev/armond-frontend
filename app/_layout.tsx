@@ -23,12 +23,6 @@ import { Provider } from "react-redux";
 import { CustomLightTheme, CustomDarkTheme } from "@/utils/Theme";
 import { ThemeProvider, useThemeContext } from "@/src/contexts/ThemeContext";
 
-SplashScreen.preventAutoHideAsync();
-
-SplashScreen.setOptions({
-    duration: 1000,
-    fade: true,
-});
 
 const queryClient = new QueryClient();
 
@@ -60,32 +54,24 @@ function AppContent() {
 
             console.log("🚀 앱 초기화 시작");
             const result = await initializeApp();
-
             console.log("초기화 결과:", result);
+            
+            // 초기화 결과를 상태에 저장
+            setInitialRoute(result);
 
-            setInitialRoute(result.initialRoute);
-
-            if (!result.isSuccess && result.errorMessage) {
-                console.warn("⚠️ 초기화 경고:", result.errorMessage);
-            }
+            setIsAppReady(true);
         } catch (error) {
             console.error("💥 초기화 처리 오류:", error);
             setInitialRoute("/(auth)/login");
-        } finally {
             setIsAppReady(true);
         }
     };
 
-    // 앱이 준비되면 splash screen 숨기기
-    const onLayoutRootView = useCallback(async () => {
+    // 라우팅 수행
+    useEffect(() => {
         if (isAppReady && initialRoute && !themeLoading) {
-            console.log("✅ 앱 준비 완료 - Splash screen 숨기기");
-            await SplashScreen.hideAsync();
-
-            setTimeout(() => {
-                console.log("🔄 라우팅 수행:", initialRoute);
-                router.replace(initialRoute);
-            }, 100);
+            console.log("✅ 앱 준비 완료 - 라우팅 수행:", initialRoute);
+            router.replace(initialRoute);
         }
     }, [isAppReady, initialRoute, themeLoading]);
 
@@ -101,10 +87,7 @@ function AppContent() {
     }
 
     return (
-        <GestureHandlerRootView
-            style={{ flex: 1 }}
-            onLayout={onLayoutRootView}
-        >
+        <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <StatusBar style={isDark ? 'light' : 'dark'} />
                 <PaperProvider theme={theme}>

@@ -1,13 +1,15 @@
 import { StyleSheet, View, Alert, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Text, Card, Avatar, Divider, List, useTheme } from "react-native-paper";
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useFocusEffect, useNavigation } from "expo-router";
+import { useState, useCallback, useEffect } from "react";
 import { authApi } from "../../src/api/auth/authApi";
 import { useThemeContext, type ThemeMode } from "@/src/contexts/ThemeContext";
 import { getSpacing, getRadius, getShadow } from "@/utils/Theme";
 import { useColorScheme } from "react-native";
 import { SecureStorageDebugPanel } from "@/src/components/debug/SecureStorageDebugPanel";
+import { useSelector } from 'react-redux';
+import { RootState } from '@/src/store/configureStore';
 
 export default function Settings() {
     const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +17,36 @@ export default function Settings() {
     const { themeMode, setThemeMode, isDark } = useThemeContext();
     const theme = useTheme();
     const systemColorScheme = useColorScheme();
+    const navigation = useNavigation();
+
+
+    const { memberInfo, isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+    // 화면 포커스 처리 - 다른 탭으로 자동 이동 방지
+    useFocusEffect(
+        useCallback(() => {
+            // 화면이 포커스를 받았을 때 실행
+            console.log('🔧 설정 화면 포커스됨');
+            return () => {
+                // 화면이 포커스를 잃었을 때 실행
+                console.log('🔧 설정 화면 포커스 해제됨');
+            };
+        }, [])
+    );
+
+    // 네비게이션 이벤트 리스너 - 의도하지 않은 네비게이션 방지
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+            // 로그아웃이나 의도적인 네비게이션이 아닌 경우 방지
+            if (!isLoading && e.data?.action?.type !== 'GO_BACK') {
+                console.log('🔧 의도하지 않은 네비게이션 방지:', e.data?.action?.type);
+                // 특정 조건에서만 네비게이션 방지
+                // e.preventDefault();
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation, isLoading]);
 
     const handleLogout = async () => {
         Alert.alert(
@@ -83,16 +115,30 @@ export default function Settings() {
             styles.container,
             { backgroundColor: theme.colors.background }
         ]}>
-            <ScrollView 
-                style={styles.scrollView}
-                showsVerticalScrollIndicator={false}
-                bounces={false}
-                onStartShouldSetResponder={() => true}
-                onResponderGrant={() => {
-                    // 터치 이벤트를 여기서 처리하고 전파되지 않도록 함
-                    return false;
+            <View 
+                style={styles.contentWrapper}
+                onTouchStart={(e) => {
+                    // 터치 이벤트를 여기서 처리하여 전파 차단
+                    console.log('🔧 설정 화면 터치됨');
+                    e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
+                    // 터치 종료 시에도 전파 차단
+                    e.stopPropagation();
                 }}
             >
+                <ScrollView 
+                    style={styles.scrollView}
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                    scrollEnabled={true}
+                    keyboardShouldPersistTaps="handled"
+                    onTouchStart={(e) => {
+                        // ScrollView에서도 터치 이벤트 처리
+                        console.log('🔧 스크롤뷰 터치됨');
+                        e.stopPropagation();
+                    }}
+                >
                 <View style={styles.header}>
                     <Text 
                         variant="headlineMedium" 
@@ -123,7 +169,7 @@ export default function Settings() {
                                 variant="titleLarge"
                                 style={{ color: theme.colors.onSurface }}
                             >
-                                사용자
+                                {memberInfo?.name || "사용자"}
                             </Text>
                             <Text 
                                 variant="bodyMedium" 
@@ -132,8 +178,30 @@ export default function Settings() {
                                     { color: theme.colors.onSurfaceVariant }
                                 ]}
                             >
-                                010-0000-0000
+                                {memberInfo?.phoneNumber || "전화번호 없음"}
                             </Text>
+                            {memberInfo?.height && memberInfo?.weight && (
+                                <Text 
+                                    variant="bodySmall" 
+                                    style={[
+                                        styles.subText,
+                                        { color: theme.colors.onSurfaceVariant }
+                                    ]}
+                                >
+                                    {memberInfo.height}cm / {memberInfo.weight}kg
+                                </Text>
+                            )}
+                            {memberInfo?.goalCalories && (
+                                <Text 
+                                    variant="bodySmall" 
+                                    style={[
+                                        styles.subText,
+                                        { color: theme.colors.onSurfaceVariant }
+                                    ]}
+                                >
+                                    목표 칼로리: {memberInfo.goalCalories}kcal
+                                </Text>
+                            )}
                         </View>
                     </Card.Content>
                 </Card>
@@ -284,7 +352,8 @@ export default function Settings() {
                         </Button>
                     </Card.Content>
                 </Card>
-            </ScrollView>
+                </ScrollView>
+            </View>
             
             {/* Secure Storage Debug Panel */}
             {__DEV__ && (
@@ -301,6 +370,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: getSpacing('md'),
+    },
+    contentWrapper: {
+        flex: 1,
     },
     scrollView: {
         flex: 1,
