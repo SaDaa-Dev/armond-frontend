@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>페이지를 찾을 수 없습니다.</Text>
-      <Button title="홈으로 돌아가기" onPress={() => router.replace('/')} />
+      <Button title="홈으로 돌아가기" onPress={() => router.replace('/workout')} />
     </View>
   );
 }

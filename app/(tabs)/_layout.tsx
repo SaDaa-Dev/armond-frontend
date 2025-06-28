@@ -24,7 +24,7 @@ export default function TabLayout() {
                     let iconName: string;
 
                     switch (route.name) {
-                        case "index":
+                        case "workout":
                             iconName = "home";
                             break;
                         case "settings":
@@ -47,7 +47,7 @@ export default function TabLayout() {
             })}
         >
             <Tabs.Screen 
-                name="index" 
+                name="workout" 
                 options={{ 
                     title: "운동",
                     tabBarLabel: "운동",

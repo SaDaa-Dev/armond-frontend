@@ -10,7 +10,7 @@ const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
 // 초기 라우팅 타입
-export type InitialRoute = "/(auth)/login" | "/(tabs)";
+export type InitialRoute = "/(auth)/login" | "/(tabs)/workout";
 
 // 앱 초기화 결과 타입
 export interface AppInitializationResult {
@@ -112,7 +112,7 @@ export const initializeApp = async (): Promise<InitialRoute> => {
                 console.log("앱 초기화: 인증 성공, 메인 화면으로 이동");
                 store.dispatch(setAuthenticated(true));
                 store.dispatch(setMemberInfo(memberInfo));
-                return "/(tabs)";
+                return "/(tabs)/workout";
             } else {
                 // 토큰은 있지만 사용자 정보가 없는 경우
                 console.log("앱 초기화: 사용자 정보 없음, 로그아웃 처리");
