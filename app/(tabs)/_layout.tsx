@@ -1,12 +1,13 @@
 import React from 'react';
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { WorkoutHeader } from "@/src/components/common/Header";
 
 export default function TabLayout() {
     return (
         <Tabs
             screenOptions={({ route }) => ({
-                headerShown: true,
+                headerShown: false,
                 headerStyle: {
                     backgroundColor: '#1a1a1a',
                 },
@@ -51,6 +52,8 @@ export default function TabLayout() {
                 options={{ 
                     title: "운동",
                     tabBarLabel: "운동",
+                    headerShown: true,
+                    header: () => <WorkoutHeader />,
                 }} 
             />
             <Tabs.Screen 

@@ -13,6 +13,7 @@ const api = createApiClient();
 export const workoutApi = {
     getExercisePresets: async (): Promise<ApiResponseListExerciseListDto> => {
         try {
+            console.log("getExercisePresets");
             const response = await api.requestWithMethod(
                 "GET",
                 "/exercises"
