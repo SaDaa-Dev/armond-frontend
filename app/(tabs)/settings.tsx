@@ -1,15 +1,15 @@
 import { StyleSheet, View, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Text, Card, Avatar, Divider, useTheme } from "react-native-paper";
+import { Button, Text, Card, Avatar, Divider } from "react-native-paper";
 import { router } from "expo-router";
 import { useState } from "react";
 import { authApi } from "../../src/api/auth/authApi";
 import * as SecureStore from "expo-secure-store";
+
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
 export default function Settings() {
-    const theme = useTheme();
     const [isLoading, setIsLoading] = useState(false);
 
     const handleLogout = async () => {
@@ -65,8 +65,8 @@ export default function Settings() {
                     
                     <Button 
                         mode="outlined" 
-                        style={[styles.button, { borderColor: theme.colors.error }]} 
-                        textColor={theme.colors.error}
+                        style={[styles.button, { borderColor: "#ff5252" }]} 
+                        textColor="#ff5252"
                         onPress={handleLogout}
                         loading={isLoading}
                         disabled={isLoading}

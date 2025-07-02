@@ -17,7 +17,7 @@ import {
     useTheme,
 } from "react-native-paper";
 import Animated, {
-    useAnimatedStyle,
+    useAnimatedStyle, 
     useSharedValue,
     withSpring,
 } from "react-native-reanimated";

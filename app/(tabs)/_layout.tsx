@@ -1,25 +1,21 @@
 import React from 'react';
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useTheme } from "react-native-paper";
-import "react-native-reanimated";
 
 export default function TabLayout() {
-    const theme = useTheme();
-
     return (
         <Tabs
             screenOptions={({ route }) => ({
                 headerShown: true,
                 headerStyle: {
-                    backgroundColor: theme.colors.elevation.level1,
+                    backgroundColor: '#1a1a1a',
                 },
                 headerTintColor: '#FFFFFF',
                 tabBarStyle: {
-                    backgroundColor: theme.colors.elevation.level1,
-                    borderTopColor: theme.colors.elevation.level2,
+                    backgroundColor: '#1a1a1a',
+                    borderTopColor: '#2a2a2a',
                 },
-                tabBarActiveTintColor: '#FFFFFF',
+                tabBarActiveTintColor: '#8B5CF6',
                 tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.6)',
                 tabBarLabelStyle: {
                     color: '#FFFFFF',
