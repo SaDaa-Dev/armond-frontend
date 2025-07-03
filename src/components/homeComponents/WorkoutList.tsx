@@ -6,9 +6,10 @@ import {
     setShowWorkoutSession
 } from "@/src/store/features/workoutSlice";
 import { StyleSheet, View } from "react-native";
-import { Card, IconButton, Text } from "react-native-paper";
+import { Card, IconButton, Text, useTheme } from "react-native-paper";
 import Toast from "react-native-toast-message";
 import { useDispatch } from "react-redux";
+import { getSpacing, getRadius, getShadow } from "@/utils/Theme";
 
 const WORKOUT_PRESETS = {   
     chest: [
@@ -25,6 +26,7 @@ const WORKOUT_PRESETS = {
 export default function RoutineList() {
     const dispatch = useDispatch();
     const { routines, showWorkoutSession, activeWorkoutSession } = useWorkout();
+    const theme = useTheme();
 
     const getWorkoutTitle = (workoutId: number) => {
         for (const category of Object.values(WORKOUT_PRESETS)) {
@@ -59,7 +61,13 @@ export default function RoutineList() {
     
     return (
         <View style={styles.container}>
-            <Text variant="titleLarge" style={styles.sectionTitle}>
+            <Text 
+                variant="titleLarge" 
+                style={[
+                    styles.sectionTitle,
+                    { color: theme.colors.onBackground }
+                ]}
+            >
                 내 운동 루틴
             </Text>
             {routines.map((routine) => {
@@ -68,16 +76,29 @@ export default function RoutineList() {
                 return (
                     <Card 
                         key={routine.id} 
-                        style={[styles.card, isWorkoutActive && styles.disabledCard]}
+                        style={[
+                            styles.card,
+                            {
+                                backgroundColor: theme.colors.surface,
+                                borderColor: theme.colors.outline,
+                            },
+                            isWorkoutActive && {
+                                ...styles.disabledCard,
+                                backgroundColor: theme.colors.surface + '80',
+                            }
+                        ]}
                         onPress={isWorkoutActive ? undefined : () => handleStartRoutine(routine)}
                     >
                         <Card.Title
                             title={routine.name}
                             subtitle={`${routine.workouts.length}개의 운동`}
+                            titleStyle={{ color: theme.colors.onSurface }}
+                            subtitleStyle={{ color: theme.colors.onSurfaceVariant }}
                             right={(props) => (
                                 <IconButton
                                     {...props}
                                     icon="delete"
+                                    iconColor={theme.colors.onSurface}
                                     onPress={(e) => {
                                         e.stopPropagation();
                                         dispatch(deleteWorkoutRoutine(routine.id));
@@ -87,13 +108,24 @@ export default function RoutineList() {
                         />
                         <Card.Content>
                             {routine.workouts.map((workoutId, index) => (
-                                <Text key={workoutId} style={styles.workoutItem}>
+                                <Text 
+                                    key={workoutId} 
+                                    style={[
+                                        styles.workoutItem,
+                                        { color: theme.colors.onSurfaceVariant }
+                                    ]}
+                                >
                                     {index + 1}. {getWorkoutTitle(workoutId)}
                                 </Text>
                             ))}
                         </Card.Content>
                         <Card.Actions style={styles.cardActions}>
-                            <Text style={styles.startText}>
+                            <Text 
+                                style={[
+                                    styles.startText,
+                                    { color: theme.colors.onSurfaceVariant }
+                                ]}
+                            >
                                 {isWorkoutActive 
                                     ? "진행 중인 운동이 있어 시작할 수 없습니다" 
                                     : "탭하여 이 루틴으로 운동 시작"}
@@ -108,31 +140,32 @@ export default function RoutineList() {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
+        padding: getSpacing('md'),
     },
     sectionTitle: {
-        marginBottom: 16,
-        color: '#FFFFFF',
+        marginBottom: getSpacing('md'),
+        fontWeight: '600',
     },
     card: {
-        marginBottom: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 12,
+        marginBottom: getSpacing('md'),
+        borderRadius: getRadius('lg'),
+        borderWidth: 1,
+        ...getShadow('sm'),
     },
     disabledCard: {
         opacity: 0.6,
     },
     workoutItem: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        marginVertical: 4,
+        marginVertical: getSpacing('xs'),
+        lineHeight: 20,
     },
     cardActions: {
         justifyContent: 'center',
         paddingTop: 0,
     },
     startText: {
-        color: 'rgba(255, 255, 255, 0.5)',
         fontSize: 12,
         fontStyle: 'italic',
+        textAlign: 'center',
     }
 });   

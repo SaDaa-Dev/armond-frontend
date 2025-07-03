@@ -17,10 +17,12 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useCallback, useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { MD3DarkTheme, PaperProvider } from "react-native-paper";
+import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
+import { CustomLightTheme, CustomDarkTheme } from "@/utils/Theme";
+import { ThemeProvider, useThemeContext } from "@/src/contexts/ThemeContext";
 
 // React Native Debugger 설정
 if (__DEV__) {
@@ -43,11 +45,15 @@ SplashScreen.setOptions({
 
 const queryClient = new QueryClient();
 
-export default function RootLayout() {
+function AppContent() {
     const [isAppReady, setIsAppReady] = useState<boolean>(false);
     const [initialRoute, setInitialRoute] = useState<InitialRoute | null>(null);
     const [hasInitialized, setHasInitialized] = useState<boolean>(false);
     const navigation = useNavigation();
+    const { isDark, isLoading: themeLoading } = useThemeContext();
+
+    // 사용자 설정에 따라 적절한 테마 선택
+    const theme = isDark ? CustomDarkTheme : CustomLightTheme;
 
     useEffect(() => {
         if (navigation) {
@@ -85,7 +91,7 @@ export default function RootLayout() {
 
     // 앱이 준비되면 splash screen 숨기기
     const onLayoutRootView = useCallback(async () => {
-        if (isAppReady && initialRoute) {
+        if (isAppReady && initialRoute && !themeLoading) {
             console.log("✅ 앱 준비 완료 - Splash screen 숨기기");
             await SplashScreen.hideAsync();
 
@@ -94,31 +100,41 @@ export default function RootLayout() {
                 router.replace(initialRoute);
             }, 100);
         }
-    }, [isAppReady, initialRoute]);
+    }, [isAppReady, initialRoute, themeLoading]);
 
     useEffect(() => {
-        handleAppInitialization();
-    }, []);
+        if (!themeLoading) {
+            handleAppInitialization();
+        }
+    }, [themeLoading]);
 
     // 앱이 아직 준비되지 않았으면 아무것도 렌더링하지 않음 (splash screen이 계속 보임)
-    if (!isAppReady || !initialRoute) {
+    if (!isAppReady || !initialRoute || themeLoading) {
         return null;
     }
 
     return (
+        <GestureHandlerRootView
+            style={{ flex: 1 }}
+            onLayout={onLayoutRootView}
+        >
+            <SafeAreaProvider>
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+                <PaperProvider theme={theme}>
+                    <Slot />
+                </PaperProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
+    );
+}
+
+export default function RootLayout() {
+    return (
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
-                    <GestureHandlerRootView
-                        style={{ flex: 1 }}
-                        onLayout={onLayoutRootView}
-                    >
-                        <SafeAreaProvider>
-                            <StatusBar style="auto" />
-                            <PaperProvider>
-                                <Slot />
-                            </PaperProvider>
-                        </SafeAreaProvider>
-                    </GestureHandlerRootView>
+                <ThemeProvider>
+                    <AppContent />
+                </ThemeProvider>
             </QueryClientProvider>
             <Toast />
         </Provider>

@@ -3,11 +3,12 @@ import { useWorkout } from "@/src/hooks/useWorkout";
 import { setShowWorkoutSession, setWorkoutMode } from "@/src/store/features/workoutSlice";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { List, Modal, Portal } from "react-native-paper";
+import { List, Modal, Portal, useTheme } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import CreateWorkoutSchedule from "./CreateWorkoutSchedule";
 import WorkoutSession from "./workout/workoutComponents/WorkoutSession";
 import { WorkoutMod } from "@/src/hooks/useWorkoutQuery";
+import { getSpacing, getRadius, getShadow } from "@/utils/Theme";
 
 export default function WorkoutFooter() {
     const [workoutStartModal, setWorkoutStartModal] = useState(false);
@@ -15,6 +16,7 @@ export default function WorkoutFooter() {
     const [currentMode, setCurrentMode] = useState(WorkoutMod.QUICK);
     const { activeWorkoutSession } = useWorkout();
     const dispatch = useDispatch();
+    const theme = useTheme();
 
     // 운동 바로시작 (QUICK 모드)
     const handleQuickStart = () => {
@@ -41,7 +43,13 @@ export default function WorkoutFooter() {
 
     return (
         <>
-            <View style={styles.footer}>
+            <View style={[
+                styles.footer,
+                {
+                    backgroundColor: theme.colors.background,
+                    borderTopColor: theme.colors.outline,
+                }
+            ]}>
                 <CustomButton
                     mode="contained"
                     onPress={handlePress}
@@ -69,7 +77,13 @@ export default function WorkoutFooter() {
                 <Modal
                     visible={showEtcOptionModalVisible}
                     onDismiss={() => setShowEtcOptionModalVisible(false)}
-                    contentContainerStyle={styles.modalContainer}
+                    contentContainerStyle={[
+                        styles.modalContainer,
+                        {
+                            backgroundColor: theme.colors.surface,
+                            borderColor: theme.colors.outline,
+                        }
+                    ]}
                 >
                     <List.Section>
                         <List.Item 
@@ -106,16 +120,19 @@ export default function WorkoutFooter() {
 
 const styles = StyleSheet.create({
     footer: {
-        padding: 16,
-        paddingBottom: 12,
+        padding: getSpacing('md'),
+        paddingBottom: getSpacing('sm'),
         flexDirection: "row",
         justifyContent: "space-between",
-        gap: 16,
+        gap: getSpacing('md'),
+        borderTopWidth: 1,
+        ...getShadow('sm'),
     },
     modalContainer: {
-        backgroundColor: 'rgba(30, 30, 30, 0.95)',
-        margin: 20,
-        padding: 20,
-        borderRadius: 12,
+        margin: getSpacing('lg'),
+        padding: getSpacing('lg'),
+        borderRadius: getRadius('lg'),
+        borderWidth: 1,
+        ...getShadow('md'),
     }
 }); 
