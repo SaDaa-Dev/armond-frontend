@@ -27,12 +27,6 @@ export default function TabLayout() {
                         case "index":
                             iconName = "home";
                             break;
-                        case "calendar":
-                            iconName = "calendar";
-                            break;
-                        case "statistics":
-                            iconName = "stats-chart";
-                            break;
                         case "settings":
                             iconName = "settings";
                             break;
@@ -42,6 +36,7 @@ export default function TabLayout() {
                     }
 
                     return (
+
                         <Ionicons
                             name={iconName as any}
                             size={size}
@@ -58,15 +53,13 @@ export default function TabLayout() {
                     tabBarLabel: "운동",
                 }} 
             />
-            <Tabs.Screen name="calendar" options={{ title: "캘린더" }} />
-            <Tabs.Screen name="statistics" options={{ title: "통계" }} />
             <Tabs.Screen 
                 name="settings" 
                 options={{ 
                     title: "설정",
                     tabBarLabel: "설정",
                 }} 
-            />
+            />  
         </Tabs>
     );
 }

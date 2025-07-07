@@ -14,7 +14,7 @@ export default function Login() {
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-
+    
     // 전화번호 형식 자동 변환 (000-0000-0000)
     const formatPhoneNumber = (text: string) => {
         // 숫자만 남기고 모든 문자 제거
@@ -64,7 +64,6 @@ export default function Login() {
 
             if (response.data) {
                 console.log("로그인 성공! 사용자 정보:", response.data.memberInfo);
-                
                 // 메인 화면으로 리다이렉트
                 router.replace("/(tabs)");
             } else {

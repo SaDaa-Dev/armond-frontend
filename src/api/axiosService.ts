@@ -119,6 +119,7 @@ export const createApiClient = (): AxiosInstance & {
             }
             // 인증 오류 (401, 403)
             else if (error.response?.status && [401, 403].includes(error.response?.status) && !toastFlags.authError) {
+                console.log('인증 오류');
                 toastFlags.authError = true;
                 Toast.show({
                     type: 'error',

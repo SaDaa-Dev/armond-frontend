@@ -33,7 +33,7 @@ export default function RoutineList() {
             const workout = category.find(w => w.id === workoutId);
             if (workout) return workout.title;
         }
-        return '';
+        return `운동 ${workoutId}`;
     };
     
     const handleStartRoutine = (routine: any) => {
@@ -51,9 +51,11 @@ export default function RoutineList() {
         dispatch(clearCheckedWorkouts());
         
         // 루틴의 운동들을 체크된 운동으로 설정
-        routine.workouts.forEach((workoutId: number) => {
-            dispatch(addCheckedWorkout(workoutId));
-        });
+        if (Array.isArray(routine.workouts)) {
+            routine.workouts.forEach((workoutId: number) => {
+                dispatch(addCheckedWorkout(workoutId));
+            });
+        }
         
         // 운동 세션 시작
         dispatch(setShowWorkoutSession(true));
@@ -90,8 +92,8 @@ export default function RoutineList() {
                         onPress={isWorkoutActive ? undefined : () => handleStartRoutine(routine)}
                     >
                         <Card.Title
-                            title={routine.name}
-                            subtitle={`${routine.workouts.length}개의 운동`}
+                            title={String(routine.name || '제목 없음')}
+                            subtitle={`${Array.isArray(routine.workouts) ? routine.workouts.length : 0}개의 운동`}
                             titleStyle={{ color: theme.colors.onSurface }}
                             subtitleStyle={{ color: theme.colors.onSurfaceVariant }}
                             right={(props) => (
@@ -107,7 +109,7 @@ export default function RoutineList() {
                             )}
                         />
                         <Card.Content>
-                            {routine.workouts.map((workoutId, index) => (
+                            {Array.isArray(routine.workouts) && routine.workouts.map((workoutId, index) => (
                                 <Text 
                                     key={workoutId} 
                                     style={[
@@ -115,7 +117,7 @@ export default function RoutineList() {
                                         { color: theme.colors.onSurfaceVariant }
                                     ]}
                                 >
-                                    {index + 1}. {getWorkoutTitle(workoutId)}
+                                    {String(index + 1)}. {String(getWorkoutTitle(workoutId))}
                                 </Text>
                             ))}
                         </Card.Content>

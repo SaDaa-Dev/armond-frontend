@@ -5,23 +5,22 @@ declare global {
 }
 
 import { setNavigationRef } from "@/src/api/axiosService";
+import { ThemeProvider, useThemeContext } from "@/src/contexts/ThemeContext";
 import {
     initializeApp,
     type InitialRoute,
 } from "@/src/services/appInitializationService";
 import { store } from "@/src/store/configureStore";
+import { CustomDarkTheme, CustomLightTheme } from "@/utils/Theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { router, useNavigation, Slot } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
+import { router, Slot, useNavigation } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { Provider } from "react-redux";
-import { CustomLightTheme, CustomDarkTheme } from "@/utils/Theme";
-import { ThemeProvider, useThemeContext } from "@/src/contexts/ThemeContext";
 
 
 const queryClient = new QueryClient();
@@ -38,6 +37,7 @@ function AppContent() {
 
     useEffect(() => {
         if (navigation) {
+        
             setNavigationRef(navigation);
         }
     }, [navigation]);
