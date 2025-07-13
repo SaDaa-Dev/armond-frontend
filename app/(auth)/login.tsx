@@ -65,7 +65,7 @@ export default function Login() {
             if (response.data) {
                 console.log("로그인 성공! 사용자 정보:", response.data.memberInfo);
                 // 메인 화면으로 리다이렉트
-                router.replace("/(tabs)");
+                router.replace("/(tabs)/workout");
             } else {
                 setError(response.error || "로그인에 실패했습니다.");
             }

@@ -35,6 +35,7 @@ export const authApi = {
         loginRequestDto: LoginRequestDto
     ): Promise<TokenResponseDto> => {
         try {
+            console.log("login request", loginRequestDto);
             const response = await api.requestWithMethod(
                 "POST",
                 "/auth/login",

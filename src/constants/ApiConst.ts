@@ -7,7 +7,7 @@ const DEV_IPS = {
     localhost: "localhost",
     // 물리적 디바이스에서 사용할 개발 머신의 IP
     // 터미널에서 `ipconfig getifaddr en0` (Mac) 또는 `ipconfig` (Windows) 실행하여 확인
-    localIP: "192.168.0.23", // 실제 IP 주소
+    localIP: "192.168.45.223", // 실제 IP 주소
     // Android 에뮬레이터
     androidEmulator: "10.0.2.2"
 };
