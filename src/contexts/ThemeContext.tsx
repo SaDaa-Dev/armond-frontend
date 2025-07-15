@@ -39,13 +39,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     useEffect(() => {
         const loadThemeMode = async () => {
             try {
-                console.log('📱 저장된 테마 설정 불러오기 시작');
                 const savedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-                console.log('📱 저장된 테마 설정:', savedMode);
                 
                 if (savedMode && ['light', 'dark', 'system'].includes(savedMode)) {
                     setThemeModeState(savedMode as ThemeMode);
-                    console.log('📱 테마 설정 적용:', savedMode);
                 }
             } catch (error) {
                 console.error('❌ 테마 설정 불러오기 실패:', error);

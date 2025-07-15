@@ -4,6 +4,8 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { components } from "../api-types";
 import { createApiClient } from "../axiosService";
+import { ApiErrorResponse, ErrorCode } from "../errorTypes";
+import { getUserMessage, isAuthError, isMemberError, isValidationError } from "@/src/utils/errorUtils";
 
 // 토큰 스토리지 키 상수
 const ACCESS_TOKEN_KEY = "access_token";
@@ -17,6 +19,35 @@ type RegisterRequestDto = components["schemas"]["RegisterRequestDto"];
 type MemberInfo = components["schemas"]["MemberInfo"];
 
 const api = createApiClient();
+
+// 에러 처리 헬퍼 함수
+const handleAuthError = (error: any, defaultMessage: string): never => {
+    console.error("Auth API error:", error);
+    
+    // axios 에러인 경우
+    if (error.response?.data) {
+        const errorData = error.response.data as ApiErrorResponse;
+        
+        // 백엔드 에러 코드가 있는 경우
+        if (errorData.errorCode) {
+            const userMessage = getUserMessage(errorData.errorCode, errorData.message);
+            throw new Error(userMessage);
+        }
+        
+        // 에러 코드가 없지만 메시지가 있는 경우
+        if (errorData.message) {
+            throw new Error(errorData.message);
+        }
+    }
+    
+    // 네트워크 에러 등 기본 처리
+    if (error.request && !error.response) {
+        throw new Error("서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.");
+    }
+    
+    // 기본 에러 메시지
+    throw new Error(defaultMessage);
+};
 
 export const authApi = {
     checkHealth: async (): Promise<boolean> => {
@@ -67,8 +98,7 @@ export const authApi = {
             
             return response.data;
         } catch (error) {
-            console.error("Login error:", error);
-            throw new Error("로그인에 실패했습니다");
+            return handleAuthError(error, "로그인에 실패했습니다");
         }
     },
 
@@ -96,7 +126,7 @@ export const authApi = {
             // 에러가 발생해도 로컬 정보는 삭제
             await authApi.clearAllStoredData();
             router.replace("/(auth)/login");
-            throw new Error("로그아웃에 실패했습니다");
+            return handleAuthError(error, "로그아웃에 실패했습니다");
         }
     },
 
@@ -131,14 +161,7 @@ export const authApi = {
             }
         } catch (error: any) {
             console.error("❌ 회원가입 실패:", error);
-            
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else if (error.request) {
-                throw new Error("서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.");
-            } else {
-                throw new Error(`요청 설정 오류: ${error.message}`);
-            }
+            return handleAuthError(error, "회원가입에 실패했습니다");
         }
     },
 
@@ -173,7 +196,10 @@ export const authApi = {
             return response.data;
         } catch (error) {
             console.error("Token refresh error:", error);
-            throw new Error("토큰 갱신에 실패했습니다");
+            // 토큰 갱신 실패 시 로그아웃 처리
+            await authApi.clearAllStoredData();
+            router.replace("/(auth)/login");
+            return handleAuthError(error, "토큰 갱신에 실패했습니다");
         }
     },
 
