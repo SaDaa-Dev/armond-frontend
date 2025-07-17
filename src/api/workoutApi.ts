@@ -5,6 +5,7 @@ import { createApiClient } from "./axiosService";
 type ExerciseListDto = components['schemas']['ExerciseListDto'];
 type QuickWorkoutCompleteDto = components['schemas']['QuickWorkoutCompleteDto'];
 type ApiResponseListExerciseListDto = components['schemas']['ApiResponseListExerciseListDto'];
+type ApiResponseExerciseListDto = components['schemas']['ApiResponseExerciseListDto'];
 type ApiResponseString = components['schemas']['ApiResponseString'];
 type SaveRoutineDto = components['schemas']['SaveRoutineDto'];
 
@@ -47,6 +48,19 @@ export const workoutApi = {
             return response.data;
         } catch (error) {
             throw new Error('운동 완료 처리에 실패했습니다');
+        }
+    },
+    
+    saveExercise: async (exerciseDto: ExerciseListDto): Promise<ApiResponseExerciseListDto> => {
+        try {
+            const response = await api.requestWithMethod(
+                "POST",
+                "/exercises",
+                exerciseDto
+            );
+            return response.data;
+        } catch (error) {
+            throw new Error('커스텀 운동 저장에 실패했습니다');
         }
     },
 };

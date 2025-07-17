@@ -52,12 +52,14 @@ export default function WorkoutFooter() {
             ]}>
                 <CustomButton
                     mode="contained"
+                    size="large"
                     onPress={handlePress}
                     text={activeWorkoutSession ? "이어하기" : "운동 바로시작"}
                 />
                 <CustomButton
                     text="계획하기"
                     mode="outlined"
+                    size="large"
                     onPress={handleEtcOptionPress}
                 />
             </View>
